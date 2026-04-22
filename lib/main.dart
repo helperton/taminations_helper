@@ -23,10 +23,12 @@ import 'package:flutter/material.dart' as fm;
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart' as pp;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taminations/beat_notifier.dart';
 import 'package:taminations/sequencer/sequencer_model.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'api_server.dart';
 import 'common_flutter.dart';
 import 'pages/anim_list_page.dart';
 import 'pages/animation_page.dart';
@@ -57,6 +59,15 @@ void main() async {
   if (TamUtils.isWindowDevice) {
     await windowManager.ensureInitialized();
   }
+  // Wipe any invalid formation name saved from a prior session so the
+  // SequencerPage widget doesn't crash on startup trying to look it up.
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('Starting Formation', 'Squared Set');
+  final prefsWithCache = await SharedPreferencesWithCache.create(
+      cacheOptions: SharedPreferencesWithCacheOptions());
+  await prefsWithCache.setString('Starting Formation', 'Squared Set');
+
+  await tamHelperApiServer.start();
   fm.runApp(TaminationsApp());
 }
 
@@ -115,7 +126,11 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                       pp.ChangeNotifierProvider(create: (_) => Settings()),
                       pp.ChangeNotifierProvider(create: (_) => AnimationState()),
                       pp.ChangeNotifierProvider(create: (_) => AbbreviationsModel()),
-                      pp.ChangeNotifierProvider(create: (context) => SequencerModel(context)),
+                      pp.ChangeNotifierProvider(create: (context) {
+                        final model = SequencerModel(context);
+                        tamHelperApiServer.setSequencerModel(model);
+                        return model;
+                      }),
                       pp.ChangeNotifierProvider(create: (_) => HighlightState()),
                       pp.Provider(create: (_) => VirtualKeyboardVisible())
                     ],
@@ -138,6 +153,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                 color: Color.FLOOR,
                 child: fm.Center(child: fm.Image.asset('assets/src/tam87.png'))));
   }
+
 
   //  Whenever user changes the window size, save it in the settings
   //  so it can be restored next time
@@ -166,7 +182,9 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
     with fm.ChangeNotifier, fm.PopNavigatorRouterDelegateMixin<TamState> {
   @override
   final fm.GlobalKey<fm.NavigatorState> navigatorKey;
-  TaminationsRouterDelegate() : navigatorKey = fm.GlobalKey<fm.NavigatorState>();
+  TaminationsRouterDelegate() : navigatorKey = fm.GlobalKey<fm.NavigatorState>() {
+    tamHelperApiServer.setAppState(appState);
+  }
 
   final appState = TamState();
   var _orientation = fm.Orientation.landscape;
@@ -368,12 +386,14 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
         link: configuration.link,
         animnum: configuration.animnum,
         animname: configuration.animname,
-        mainPage: configuration.mainPage,
+        mainPage: configuration.mainPage == MainPage.SEQUENCER
+            ? MainPage.LEVELS
+            : configuration.mainPage,
         detailPage: configuration.detailPage,
         embed: configuration.embed,
         definition: configuration.definition,
-        formation: configuration.formation,
-        calls: configuration.calls);
+        formation: '',
+        calls: '');
     appState.addListener(() {
       //setNewRoutePath(appState);
       notifyListeners();
@@ -382,20 +402,23 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
 
   @override
   Future<void> setNewRoutePath(TamState configuration) async {
+    final mainPage = configuration.mainPage == MainPage.SEQUENCER
+        ? MainPage.LEVELS
+        : configuration.mainPage;
     appState.change(
         level: configuration.level,
         link: configuration.link,
         animnum: configuration.animnum,
         animname: configuration.animname,
-        mainPage: configuration.mainPage,
+        mainPage: mainPage,
         detailPage: configuration.detailPage,
         embed: configuration.embed,
         play: configuration.play,
         loop: configuration.loop,
         grid: configuration.grid,
         definition: configuration.definition,
-        formation: configuration.formation,
-        calls: configuration.calls);
+        formation: '',
+        calls: '');
     notifyListeners();
   }
 }
@@ -425,6 +448,10 @@ class TaminationsRouteInformationParser extends fm.RouteInformationParser<TamSta
     }
     var formation = params['formation'];
     var calls = params['calls'];
+    if (mainPage == MainPage.SEQUENCER) {
+      formation = null;
+      calls = null;
+    }
     //  For backwards compatibility
     if (params['action'] == 'ANIMLIST') {
       mainPage = MainPage.ANIMLIST;

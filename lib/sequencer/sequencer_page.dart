@@ -71,6 +71,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
   late SequencerModel model;
   late AbbreviationsModel abbreviationsModel;
   var formationSetByState = false;
+  static const fallbackStartingFormation = 'Squared Set';
 
   @override
   void didChangeDependencies() {
@@ -79,7 +80,9 @@ class _SequencerPageState extends fm.State<SequencerPage> {
     model = pp.Provider.of<SequencerModel>(context,listen: false);
     if (tamState.formation != null && tamState.formation!.isNotBlank) {
       formationSetByState = true;
-      model.setStartingFormation(tamState.formation!);
+      final formation = validStartingFormation(tamState.formation!);
+      tamState.change(formation: formation);
+      model.setStartingFormation(formation);
       model.reset();
       if (tamState.calls != null && tamState.calls!.isNotBlank) {
         var pasteCalls = tamState.calls;  // tamState gets clobbered, need to save the calls
@@ -89,7 +92,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
       }
     }
     else {
-      model.setStartingFormation(Settings.startingFormation);
+      model.setStartingFormation(validStartingFormation(Settings.startingFormation));
       model.reset();
     }
     model.addListener(() {
@@ -112,7 +115,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               //  Setting the formation here if also set above
               //  can clobber calls passed in by the URL
               if (!formationSetByState)
-                model.setStartingFormation(Settings.startingFormation);
+                model.setStartingFormation(validStartingFormation(Settings.startingFormation));
               titleModel.title = 'Sequencer';
               //  Portrait only for small devices
               if (isSmallDevice(context)) {
@@ -177,6 +180,16 @@ class _SequencerPageState extends fm.State<SequencerPage> {
         ),
       ),
     );
+  }
+
+  String validStartingFormation(String formation) {
+    try {
+      Formation(formation);
+      return formation;
+    } catch (_) {
+      Settings.startingFormation = fallbackStartingFormation;
+      return fallbackStartingFormation;
+    }
   }
 
 }

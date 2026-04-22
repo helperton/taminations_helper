@@ -75,14 +75,10 @@ class Settings extends fm.ChangeNotifier {
 
   static Future<bool> init() async {
     if (!_init) {
-      await _migratePreferences().whenComplete(() {
-        SharedPreferencesWithCache.create(
-            cacheOptions: SharedPreferencesWithCacheOptions())
-            .then((SharedPreferencesWithCache value) {
-               _instance = Settings._internal( _ProxySettings(value));
-          ;
-        });
-      });
+      await _migratePreferences();
+      final value = await SharedPreferencesWithCache.create(
+          cacheOptions: SharedPreferencesWithCacheOptions());
+      _instance = Settings._internal(_ProxySettings(value));
       _init = true;
     }
     return true;

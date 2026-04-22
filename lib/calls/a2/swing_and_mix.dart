@@ -124,7 +124,7 @@ import '../../moves.dart';
       ]),
 
     AnimatedCall('Swing and Mix',
-      formation:Formation('Inverted Lines Ends Facing In Compact'),
+      formation:Formation('Inverted Lines Ends Facing In'),
       from:'Inverted Lines, Ends Facing In',parts:'3;3',
       paths:[
           SwingRight +
@@ -391,4 +391,3 @@ import '../../moves.dart';
           SwingRight.scale(0.5,0.5)
       ]),
   ];
-

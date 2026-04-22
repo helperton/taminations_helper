@@ -40,6 +40,8 @@ class SequencerCall {
 
 class SequencerModel extends fm.ChangeNotifier {
 
+  static const fallbackStartingFormation = 'Squared Set';
+
   List<SequencerCall> calls = [];
   List<SequencerCall> _savedCalls = [];
   String _startingFormation = 'Squared Set'; // overridden by Settings
@@ -62,8 +64,9 @@ class SequencerModel extends fm.ChangeNotifier {
   }
 
   void setStartingFormation(String formation) {
-    if (formation != _startingFormation) {
-      _startingFormation = formation;
+    final validFormation = _validFormationName(formation);
+    if (validFormation != _startingFormation) {
+      _startingFormation = validFormation;
       reset();
     }
   }
@@ -316,7 +319,9 @@ class SequencerModel extends fm.ChangeNotifier {
   }
 
   CallContext _contextFromAnimation() {
-    var ctx = CallContext.fromFormation(Formation(startingFormation));
+    final formationName = _validFormationName(startingFormation);
+    _startingFormation = formationName;
+    var ctx = CallContext.fromFormation(Formation(formationName));
     if (Settings.geometry == 'Bi-Gon') {
       for (var i=0; i<ctx.dancers.length; i++)
         ctx.dancers[i].path = animation.dancers[i ~/ 2].path.clone();
@@ -466,12 +471,24 @@ class SequencerModel extends fm.ChangeNotifier {
       text.trim().startsWith('[^\\a-zA-Z0-9]'.r);
 
   void _startSequence() {
-    var formation = Formation(startingFormation);
+    final formationName = _validFormationName(startingFormation);
+    _startingFormation = formationName;
+    var formation = Formation(formationName);
     var paths = [for (var _ in formation.dancers) Path()];
     animation.setAnimatedCall(AnimatedCall('',formation:formation,paths:paths),
         geometryType: Geometry.fromString(Settings.geometry).geometry);
     animation.recalculate();
     _updateParts();
+  }
+
+  String _validFormationName(String formation) {
+    try {
+      Formation(formation);
+      return formation;
+    } catch (_) {
+      Settings.startingFormation = fallbackStartingFormation;
+      return fallbackStartingFormation;
+    }
   }
 
   void animateAtCall(int index) {
