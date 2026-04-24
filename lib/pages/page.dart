@@ -68,17 +68,11 @@ class AppLayoutSize extends fm.InheritedWidget {
   }
 }
 
-//  Return true if this is a phone-sized device rather than a tablet
-//  We can save the result because the device never changes
-bool? _isSmallDevice;
 bool isSmallDevice(fm.BuildContext context) {
-  if (_isSmallDevice == null) {
-    final h = fm.MediaQuery.of(context).size.height;
-    final w = fm.MediaQuery.of(context).size.width;
-     //  This seems to be the consensus on the phone/tablet boundary
-    _isSmallDevice = TamUtils.platform() != 'web' && min(w, h) < 600;
-  }
-  return _isSmallDevice!;
+  final h = fm.MediaQuery.of(context).size.height;
+  final w = fm.MediaQuery.of(context).size.width;
+  //  Desktop windows are resizable, so this must be computed live.
+  return TamUtils.platform() != 'web' && min(w, h) < 600;
 }
 
 //  Return true if this is a phone-size device with the on-screen keyboard shown
