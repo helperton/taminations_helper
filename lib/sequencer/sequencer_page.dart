@@ -25,14 +25,10 @@ import 'package:taminations/beat_notifier.dart';
 
 import '../common_flutter.dart';
 import '../pages/animation_page.dart';
-import '../pages/markdown_page.dart';
 import '../pages/page.dart';
-import '../pages/settings_page.dart';
-import 'abbreviations_frame.dart';
 import 'abbreviations_model.dart';
 import 'sequence_frame.dart';
 import 'sequencer_animation_frame.dart';
-import 'sequencer_calls_page.dart';
 import 'sequencer_model.dart';
 
 class SequencerTestPage extends fm.StatefulWidget {
@@ -155,25 +151,6 @@ class _SequencerPageState extends fm.State<SequencerPage> {
                       color: fm.Colors.black,
                     ),
                   ),
-                  //fm.VerticalDivider(color: Color.BLACK, width: 2.0,),
-                  //  Dummy title model to intercept titles we don't want to show
-                  ResizableChild(
-                    child: pp.ChangeNotifierProvider(
-                      create: (_) => TitleModel(),
-                      child: pp.Consumer<TamState>(
-                          builder: (context,tamState,_) {
-                            if (tamState.detailPage == DetailPage.CALLS)
-                              return SequencerCallsFrame();
-                            else if (tamState.detailPage == DetailPage.ABBREVIATIONS)
-                              return AbbreviationsFrame();
-                            else if (tamState.detailPage == DetailPage.SETTINGS)
-                              return SequencerSettingsFrame();
-                            else
-                              return MarkdownFrame(tamState.helplink ?? 'info/sequencer');
-                          }
-                      ),
-                    ),
-                  )
                 ],
               );
             }
