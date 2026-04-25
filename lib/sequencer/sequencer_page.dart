@@ -64,6 +64,7 @@ class SequencerPage extends fm.StatefulWidget {
 
 class _SequencerPageState extends fm.State<SequencerPage> {
 
+  static const desktopScale = 0.5;
   late SequencerModel model;
   late AbbreviationsModel abbreviationsModel;
   var formationSetByState = false;
@@ -106,6 +107,8 @@ class _SequencerPageState extends fm.State<SequencerPage> {
         pp.ChangeNotifierProvider.value(value: model.animation),
       ],
       child: Page(
+        showsTitleBar: false,
+        respectsTopSafeArea: false,
         child: pp.Consumer2<TitleModel,Settings>(
             builder: (context,titleModel,settings,_) {
               //  Setting the formation here if also set above
@@ -113,6 +116,21 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               if (!formationSetByState)
                 model.setStartingFormation(validStartingFormation(Settings.startingFormation));
               titleModel.title = 'Sequencer';
+              if (TamUtils.isWindowDevice) {
+                return fm.LayoutBuilder(
+                  builder: (context, constraints) => fm.ClipRect(
+                    child: fm.FittedBox(
+                      fit: fm.BoxFit.contain,
+                      alignment: fm.Alignment.topLeft,
+                      child: fm.SizedBox(
+                        width: constraints.maxWidth / desktopScale,
+                        height: constraints.maxHeight / desktopScale,
+                        child: _desktopLandscapeContent(),
+                      ),
+                    ),
+                  ),
+                );
+              }
               //  Portrait only for small devices
               if (isSmallDevice(context)) {
                 return  fm.Column(
@@ -128,34 +146,37 @@ class _SequencerPageState extends fm.State<SequencerPage> {
                   ],
                 );
               }
-              //  landscape
-              return ResizableContainer(
-                direction: fm.Axis.horizontal,
-                children: [
-                  ResizableChild(
-                    child: fm.Column(
-                      children: [
-                        fm.Expanded(child: SequenceFrame()),
-                        SequenceEditButtons(),
-                      ],
-                    ),
-                    divider: ResizableDivider(
-                      thickness: 5.0,
-                      color: fm.Colors.black,
-                    ),
-                  ),
-                  //fm.VerticalDivider(color: Color.BLACK, width: 2.0,),
-                  ResizableChild(child: SequencerAnimationFrame(),
-                    divider: ResizableDivider(
-                      thickness: 5.0,
-                      color: fm.Colors.black,
-                    ),
-                  ),
-                ],
-              );
+              return _desktopLandscapeContent();
             }
         ),
       ),
+    );
+  }
+
+  fm.Widget _desktopLandscapeContent() {
+    return ResizableContainer(
+      direction: fm.Axis.vertical,
+      children: [
+        ResizableChild(
+          child: SequencerAnimationFrame(),
+          divider: ResizableDivider(
+            thickness: 5.0,
+            color: fm.Colors.black,
+          ),
+        ),
+        ResizableChild(
+          child: fm.Column(
+            children: [
+              fm.Expanded(child: SequenceFrame()),
+              SequenceEditButtons(),
+            ],
+          ),
+          divider: ResizableDivider(
+            thickness: 5.0,
+            color: fm.Colors.black,
+          ),
+        ),
+      ],
     );
   }
 

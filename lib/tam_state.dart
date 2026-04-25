@@ -75,6 +75,7 @@ class TamState extends fm.ChangeNotifier {
   bool grid;
   String axes;
   bool definition;
+  bool sidecarMode;
   //  Fields for sequencer
   String? formation;
   String? calls;
@@ -97,6 +98,7 @@ class TamState extends fm.ChangeNotifier {
     this.loop = false,
     this.grid = false,
     this.definition = false,
+    this.sidecarMode = false,
     this.axes = 'None',
     this.formation,
     this.calls
@@ -105,7 +107,7 @@ class TamState extends fm.ChangeNotifier {
 
   void change({String? level, String? link, int? animnum, String? animname,
     MainPage? mainPage, DetailPage? detailPage,
-    bool? embed, bool? play, bool? loop, bool? grid, bool? definition, String? axes,
+    bool? embed, bool? play, bool? loop, bool? grid, bool? definition, bool? sidecarMode, String? axes,
     String? formation, String? calls, String? helplink}) {
     final before = toString();
     final params = Uri.parse(link ?? '').queryParameters;
@@ -129,6 +131,7 @@ class TamState extends fm.ChangeNotifier {
     this.grid = grid ?? this.grid;
     this.axes = axes ?? this.axes;
     this.definition = definition ?? this.definition;
+    this.sidecarMode = sidecarMode ?? this.sidecarMode;
     this.formation = formation ?? this.formation;
     this.calls = calls ?? this.calls;
     this.helplink = helplink ?? this.helplink;
@@ -151,6 +154,7 @@ class TamState extends fm.ChangeNotifier {
     if (loop) 'loop',
     if (grid) 'grid',
     if (definition) 'definition',
+    if (sidecarMode) 'sidecar',
     if (axes!='None') 'axes=$axes',
     if (formation != null && formation!.isNotBlank)
       'formation=$formation',
@@ -189,4 +193,3 @@ class HighlightState extends fm.ChangeNotifier {
   String toString() => '$_currentCall$_currentPart';
 
 }
-

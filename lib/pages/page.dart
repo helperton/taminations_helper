@@ -27,7 +27,13 @@ import '../common_flutter.dart';
 class Page extends fm.StatelessWidget {
 
   final fm.Widget child;
-  Page({required this.child});
+  final bool showsTitleBar;
+  final bool respectsTopSafeArea;
+  Page({
+    required this.child,
+    this.showsTitleBar = true,
+    this.respectsTopSafeArea = true,
+  });
 
   @override
   fm.Widget build(fm.BuildContext context) {
@@ -35,12 +41,16 @@ class Page extends fm.StatelessWidget {
       create: (_) => TitleModel(),
       child: fm.Scaffold(
           backgroundColor: Color.GRAY,
-          appBar: fm.PreferredSize(
-              preferredSize: fm.Size.fromHeight(56.0),
-              child: TitleBar()),
+          appBar: showsTitleBar
+              ? fm.PreferredSize(
+                  preferredSize: fm.Size.fromHeight(56.0),
+                  child: TitleBar(),
+                )
+              : null,
           //  Use SafeArea to adjust screen area for soft buttons
           //  such as on Pixel with 3-button navigation on
           body: fm.SafeArea(
+            top: respectsTopSafeArea,
             child: fm.LayoutBuilder(
                 builder: (context,constraints) =>
                 AppLayoutSize(constraints: constraints, child: child)

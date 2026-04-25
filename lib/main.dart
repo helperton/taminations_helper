@@ -47,8 +47,71 @@ import 'sequencer/abbreviations_model.dart';
 import 'sequencer/sequencer_calls_page.dart';
 import 'sequencer/sequencer_page.dart';
 
+class SidecarDockRequest {
+  final fm.Rect hostFrame;
+  final fm.Rect screenFrame;
+  final fm.Rect? dockFrame;
+
+  SidecarDockRequest({
+    required this.hostFrame,
+    required this.screenFrame,
+    this.dockFrame,
+  });
+
+  static SidecarDockRequest? fromLaunchArgs(List<String> args) {
+    final hostValue = args
+        .firstWhere((arg) => arg.startsWith('--sidecar-host-frame='), orElse: () => '');
+    final screenValue = args
+        .firstWhere((arg) => arg.startsWith('--sidecar-screen-frame='), orElse: () => '');
+    if (hostValue.isEmpty || screenValue.isEmpty) {
+      return null;
+    }
+    final hostFrame = _parseRectArg(hostValue.split('=').last);
+    final screenFrame = _parseRectArg(screenValue.split('=').last);
+    if (hostFrame == null || screenFrame == null) {
+      return null;
+    }
+    final dockValue = args
+        .firstWhere((arg) => arg.startsWith('--sidecar-dock-frame='), orElse: () => '');
+    final dockFrame = dockValue.isEmpty ? null : _parseRectArg(dockValue.split('=').last);
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame);
+  }
+
+  static SidecarDockRequest? fromJson(Map<String, dynamic> json) {
+    final hostFrame = _parseRectJson(json['hostFrame']);
+    final screenFrame = _parseRectJson(json['screenFrame']);
+    if (hostFrame == null || screenFrame == null) {
+      return null;
+    }
+    final dockFrame = _parseRectJson(json['dockFrame']);
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame);
+  }
+
+  static fm.Rect? _parseRectArg(String raw) {
+    final values = raw.split(',').map((value) => double.tryParse(value)).toList();
+    if (values.length != 4 || values.any((value) => value == null)) {
+      return null;
+    }
+    return fm.Rect.fromLTWH(values[0]!, values[1]!, values[2]!, values[3]!);
+  }
+
+  static fm.Rect? _parseRectJson(dynamic raw) {
+    if (raw is! Map<String, dynamic>) {
+      return null;
+    }
+    final x = (raw['x'] as num?)?.toDouble();
+    final y = (raw['y'] as num?)?.toDouble();
+    final width = (raw['width'] as num?)?.toDouble();
+    final height = (raw['height'] as num?)?.toDouble();
+    if (x == null || y == null || width == null || height == null) {
+      return null;
+    }
+    return fm.Rect.fromLTWH(x, y, width, height);
+  }
+}
+
 ///  Main routine
-void main() async {
+void main(List<String> args) async {
   LicenseRegistry.addLicense(() async* {
     final license = await rootBundle.loadString('google_fonts/LICENSE.txt');
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
@@ -68,7 +131,7 @@ void main() async {
   await prefsWithCache.setString('Starting Formation', 'Squared Set');
 
   await tamHelperApiServer.start();
-  fm.runApp(TaminationsApp());
+  fm.runApp(TaminationsApp(initialDockRequest: SidecarDockRequest.fromLaunchArgs(args)));
 }
 
 //  TaminationsApp is the top-level widget.
@@ -76,14 +139,32 @@ void main() async {
 //  which does all the work
 //  Also holds global state and initialization futures
 class TaminationsApp extends fm.StatefulWidget {
+  final SidecarDockRequest? initialDockRequest;
+
+  TaminationsApp({this.initialDockRequest});
+
   @override
   fm.State<fm.StatefulWidget> createState() => _TaminationsAppState();
 }
 
 class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener {
-  final TaminationsRouterDelegate _routerDelegate = TaminationsRouterDelegate();
+  static const sidecarTopOffset = 40.0;
+  static const sidecarWidthRatio = 0.16;
+  static const sidecarHeightRatio = 0.94;
+  late final TaminationsRouterDelegate _routerDelegate;
   final TaminationsRouteInformationParser _routeInformationParser =
       TaminationsRouteInformationParser();
+
+  @override
+  void initState() {
+    super.initState();
+    _routerDelegate = TaminationsRouterDelegate(
+      initialMainPage: widget.initialDockRequest != null ? MainPage.SEQUENCER : null,
+      initialSidecarMode: widget.initialDockRequest != null,
+    );
+    tamHelperApiServer.setDockWindowHandler(_handleDockRequestJson);
+    tamHelperApiServer.setWindowDebugInfoProvider(_windowDebugInfo);
+  }
 
   @override
   void dispose() {
@@ -109,6 +190,11 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                 if (nums.length == 4)
                   windowManager.setBounds(fm.Rect.fromLTRB(
                       nums[0].d, nums[1].d, nums[2].d, nums[3].d));
+              }
+              if (widget.initialDockRequest != null) {
+                later(() {
+                  _dockWindow(widget.initialDockRequest!);
+                });
               }
               //  and listen for when user changes the window size
               windowManager.addListener(this);
@@ -174,6 +260,94 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       Settings.windowRect = '${b.left} ${b.top} ${b.right} ${b.bottom}';
     }
   }
+
+  Future<void> _handleDockRequestJson(Map<String, dynamic> request) async {
+    final dockRequest = SidecarDockRequest.fromJson(request);
+    if (dockRequest == null) {
+      throw ArgumentError('Invalid dock request payload.');
+    }
+    await _dockWindow(dockRequest);
+  }
+
+  Future<Map<String, dynamic>> _windowDebugInfo() async {
+    if (!TamUtils.isWindowDevice) {
+      return {
+        'isWindowDevice': false,
+      };
+    }
+    final bounds = await windowManager.getBounds();
+    return {
+      'isWindowDevice': true,
+      'windowBounds': {
+        'x': bounds.left,
+        'y': bounds.top,
+        'width': bounds.width,
+        'height': bounds.height,
+      },
+      'savedWindowRect': Settings.windowRect,
+      'routerMainPage': _routerDelegate.appState.mainPage.toString(),
+      'routerDetailPage': _routerDelegate.appState.detailPage.toString(),
+      'routerSidecarMode': _routerDelegate.appState.sidecarMode,
+    };
+  }
+
+  Future<void> _dockWindow(SidecarDockRequest request) async {
+    if (!TamUtils.isWindowDevice) {
+      return;
+    }
+    double convertTopOriginY(fm.Rect rect, {double height = 0}) {
+      return request.screenFrame.bottom - rect.bottom + height;
+    }
+    if (request.dockFrame != null) {
+      final dockFrame = request.dockFrame!;
+      final targetWidth = min(dockFrame.width, request.screenFrame.width);
+      final targetHeight = min(dockFrame.height, request.screenFrame.height);
+      final targetLeft = max(
+        request.screenFrame.left,
+        min(dockFrame.left, request.screenFrame.right - targetWidth),
+      );
+      final targetTop = max<double>(
+        0,
+        min<double>(
+          convertTopOriginY(dockFrame),
+          max(0, request.screenFrame.height - targetHeight),
+        ),
+      );
+      await windowManager.setBounds(fm.Rect.fromLTWH(
+        targetLeft,
+        targetTop,
+        targetWidth,
+        targetHeight,
+      ));
+      await windowManager.show();
+      await windowManager.focus();
+      return;
+    }
+    final targetWidth = min(
+      request.hostFrame.width * sidecarWidthRatio,
+      request.screenFrame.width,
+    );
+    final targetHeight = min(
+      request.hostFrame.height * sidecarHeightRatio,
+      request.screenFrame.height,
+    );
+    final targetLeft = min(
+      request.hostFrame.right,
+      request.screenFrame.right - targetWidth,
+    );
+    final targetTop = min<double>(
+      convertTopOriginY(request.hostFrame, height: sidecarTopOffset),
+      max(0, request.screenFrame.height - targetHeight),
+    );
+    await windowManager.setBounds(fm.Rect.fromLTWH(
+      targetLeft,
+      targetTop,
+      targetWidth,
+      targetHeight,
+    ));
+    await windowManager.show();
+    await windowManager.focus();
+  }
 }
 
 //  Router Delegate
@@ -182,11 +356,19 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
     with fm.ChangeNotifier, fm.PopNavigatorRouterDelegateMixin<TamState> {
   @override
   final fm.GlobalKey<fm.NavigatorState> navigatorKey;
-  TaminationsRouterDelegate() : navigatorKey = fm.GlobalKey<fm.NavigatorState>() {
+  final TamState appState;
+
+  TaminationsRouterDelegate({MainPage? initialMainPage, bool initialSidecarMode = false})
+      : navigatorKey = fm.GlobalKey<fm.NavigatorState>(),
+        appState = TamState(
+          mainPage: initialMainPage ?? MainPage.LEVELS,
+          detailPage: DetailPage.NONE,
+          sidecarMode: initialSidecarMode,
+          formation: initialMainPage == MainPage.SEQUENCER ? 'Squared Set' : null,
+          calls: initialMainPage == MainPage.SEQUENCER ? '' : null,
+        ) {
     tamHelperApiServer.setAppState(appState);
   }
-
-  final appState = TamState();
   var _orientation = fm.Orientation.landscape;
   //  this is necessary for the web URL and back button to work
   @override
@@ -225,7 +407,12 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
 
                   //  Pages for landscape - first and second, Sequencer, Practice
                   pages: (orientation == fm.Orientation.landscape)
-                      ? [
+                      ? ((appState.mainPage == MainPage.SEQUENCER && appState.sidecarMode)
+                          ? [
+                              fm.MaterialPage(
+                                  key: fm.ValueKey('Sequencer'), child: SequencerPage()),
+                            ]
+                          : [
                           fm.MaterialPage(
                               key: fm.ValueKey('First Landscape Page'),
                               child: FirstLandscapePage()),
@@ -245,7 +432,7 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
                             fm.MaterialPage(key: fm.ValueKey('Practice'), child: PracticePage()),
                           if (appState.mainPage == MainPage.SEQUENCER)
                             fm.MaterialPage(key: fm.ValueKey('Sequencer'), child: SequencerPage()),
-                        ]
+                        ])
 
                       //  Pages for portrait - Level, Animlist, Animation, Settings, etc
                       : [
@@ -386,14 +573,12 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
         link: configuration.link,
         animnum: configuration.animnum,
         animname: configuration.animname,
-        mainPage: configuration.mainPage == MainPage.SEQUENCER
-            ? MainPage.LEVELS
-            : configuration.mainPage,
+        mainPage: configuration.mainPage,
         detailPage: configuration.detailPage,
         embed: configuration.embed,
         definition: configuration.definition,
-        formation: '',
-        calls: '');
+        formation: configuration.formation ?? '',
+        calls: configuration.calls ?? '');
     appState.addListener(() {
       //setNewRoutePath(appState);
       notifyListeners();
@@ -402,23 +587,20 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
 
   @override
   Future<void> setNewRoutePath(TamState configuration) async {
-    final mainPage = configuration.mainPage == MainPage.SEQUENCER
-        ? MainPage.LEVELS
-        : configuration.mainPage;
     appState.change(
         level: configuration.level,
         link: configuration.link,
         animnum: configuration.animnum,
         animname: configuration.animname,
-        mainPage: mainPage,
+        mainPage: configuration.mainPage,
         detailPage: configuration.detailPage,
         embed: configuration.embed,
         play: configuration.play,
         loop: configuration.loop,
         grid: configuration.grid,
         definition: configuration.definition,
-        formation: '',
-        calls: '');
+        formation: configuration.formation ?? '',
+        calls: configuration.calls ?? '');
     notifyListeners();
   }
 }

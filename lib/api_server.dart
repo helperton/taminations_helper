@@ -26,9 +26,12 @@ import 'tam_state.dart';
 
 class TamHelperApiServer {
   static const port = 7234;
+  static const debugBuildMarker = 'dock-debug-8';
 
   SequencerModel? _sequencerModel;
   TamState? _appState;
+  Future<void> Function(Map<String, dynamic> request)? _dockWindow;
+  Future<Map<String, dynamic>> Function()? _windowDebugInfoProvider;
   HttpServer? _server;
 
   // Debug state — updated on every /sequence request.
@@ -37,6 +40,8 @@ class TamHelperApiServer {
   String? _lastError;
   String? _lastRequestTime;
   String? _lastResponseSummary;
+  Map<String, dynamic>? _lastDockRequest;
+  String? _lastDockResult;
 
   void setSequencerModel(SequencerModel model) {
     _sequencerModel = model;
@@ -44,6 +49,14 @@ class TamHelperApiServer {
 
   void setAppState(TamState state) {
     _appState = state;
+  }
+
+  void setDockWindowHandler(Future<void> Function(Map<String, dynamic> request) handler) {
+    _dockWindow = handler;
+  }
+
+  void setWindowDebugInfoProvider(Future<Map<String, dynamic>> Function() provider) {
+    _windowDebugInfoProvider = provider;
   }
 
   Future<void> start() async {
@@ -87,7 +100,11 @@ class TamHelperApiServer {
     }
 
     if (request.method == 'GET' && path == 'debug') {
+      final windowDebugInfo = await _windowDebugInfoProvider?.call();
+      final runtimeBuildInfo = _runtimeBuildInfo();
       return _jsonOk({
+        'debugBuildMarker': debugBuildMarker,
+        'runtimeBuildInfo': runtimeBuildInfo,
         'sequencerModelSet': _sequencerModel != null,
         'appStateSet': _appState != null,
         'ready': _appState != null,
@@ -98,6 +115,9 @@ class TamHelperApiServer {
         'lastCalls': _lastCalls,
         'lastError': _lastError,
         'lastResponseSummary': _lastResponseSummary,
+        'lastDockRequest': _lastDockRequest,
+        'lastDockResult': _lastDockResult,
+        'windowDebugInfo': windowDebugInfo,
       });
     }
 
@@ -114,8 +134,64 @@ class TamHelperApiServer {
       return await _handleSequence(request);
     }
 
+    if (request.method == 'POST' && path == 'dock') {
+      return await _handleDock(request);
+    }
+
     return Response.notFound('{"error":"not found"}',
         headers: {'Content-Type': 'application/json'});
+  }
+
+  Map<String, dynamic> _runtimeBuildInfo() {
+    final executableFile = File(Platform.resolvedExecutable);
+    final executablePath = executableFile.path;
+    final executableStat = executableFile.existsSync() ? executableFile.statSync() : null;
+
+    final appContentsDirectory = executableFile.parent.parent;
+    final kernelBlobFile = File(
+      '${appContentsDirectory.path}/Frameworks/App.framework/Resources/flutter_assets/kernel_blob.bin',
+    );
+    final kernelBlobStat = kernelBlobFile.existsSync() ? kernelBlobFile.statSync() : null;
+
+    return {
+      'executablePath': executablePath,
+      'executableModifiedAt': executableStat?.modified.toIso8601String(),
+      'kernelBlobPath': kernelBlobFile.path,
+      'kernelBlobModifiedAt': kernelBlobStat?.modified.toIso8601String(),
+    };
+  }
+
+  Future<Response> _handleDock(Request request) async {
+    final dockWindow = _dockWindow;
+    if (dockWindow == null) {
+      return _jsonOk({'ok': false, 'error': 'dock handler not ready'});
+    }
+
+    final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    } catch (_) {
+      return Response(400,
+          body: jsonEncode({'error': 'invalid JSON body'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+
+    try {
+      _lastDockRequest = body;
+      _appState?.change(
+        mainPage: MainPage.SEQUENCER,
+        detailPage: DetailPage.NONE,
+        sidecarMode: true,
+        formation: 'Squared Set',
+        calls: '',
+      );
+      await dockWindow(body);
+      _lastDockResult = 'ok';
+      return _jsonOk({'ok': true});
+    } catch (error) {
+      _lastDockResult = '$error';
+      return _jsonOk({'ok': false, 'error': '$error'});
+    }
   }
 
   Future<Response> _handleUndo(Request request) async {
@@ -177,7 +253,12 @@ class TamHelperApiServer {
     _lastResponseSummary = null;
 
     // Navigate to the sequencer page with fresh state from this request.
-    _appState?.change(mainPage: MainPage.SEQUENCER, formation: formation, calls: '');
+    _appState?.change(
+      mainPage: MainPage.SEQUENCER,
+      formation: formation,
+      calls: '',
+      sidecarMode: true,
+    );
     final model = await _waitForSequencerModel();
     if (model == null) {
       _lastError = 'Sequencer model was not created after navigating to the Sequencer page.';
