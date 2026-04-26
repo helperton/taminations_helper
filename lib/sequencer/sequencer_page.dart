@@ -154,6 +154,8 @@ class _SequencerPageState extends fm.State<SequencerPage> {
   }
 
   fm.Widget _desktopLandscapeContent() {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    final dividerColor = isDark ? const fm.Color(0xFF444444) : fm.Colors.black;
     return ResizableContainer(
       direction: fm.Axis.vertical,
       children: [
@@ -161,7 +163,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
           child: SequencerAnimationFrame(),
           divider: ResizableDivider(
             thickness: 5.0,
-            color: fm.Colors.black,
+            color: dividerColor,
           ),
         ),
         ResizableChild(
@@ -173,7 +175,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
           ),
           divider: ResizableDivider(
             thickness: 5.0,
-            color: fm.Colors.black,
+            color: dividerColor,
           ),
         ),
       ],

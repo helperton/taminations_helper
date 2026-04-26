@@ -22,11 +22,241 @@
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter/painting.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart' as pp;
 
 import 'common_flutter.dart';
 import 'dance_model.dart';
 
+class DanceThemeTuning extends fm.ChangeNotifier {
+  static const int sliderDivisions = 4095;
+  static const Color _minFloorColor = Color.BLACK;
+  static const Color _midFloorColor = Color(0xFF505050);
+  static const Color _maxFloorColor = Color.FLOOR;
+  static const double _minDancerFillFactor = 0.65;
+  static const double _maxDancerFillFactor = 0.90;
+  static const double _strokeOffset = 0.10;
+  static const double _minContrastBias = -0.06;
+  static const double _maxContrastBias = 0.06;
+
+  int _floorSliderValue = 2702;
+  int _dancerSliderValue = 1711;
+  int _contrastSliderValue = 2283;
+  bool _isPanelExpanded = false;
+
+  int get floorSliderValue => _floorSliderValue;
+  int get dancerSliderValue => _dancerSliderValue;
+  int get contrastSliderValue => _contrastSliderValue;
+  bool get isPanelExpanded => _isPanelExpanded;
+
+  double get _baseDancerFillFactor =>
+      _interpolateDouble(_dancerSliderValue, _minDancerFillFactor, _maxDancerFillFactor);
+  double get contrastBias =>
+      _interpolateDouble(_contrastSliderValue, _minContrastBias, _maxContrastBias);
+
+  Color get darkFloorColor {
+    final midpoint = sliderDivisions / 2;
+    final isLowerHalf = _floorSliderValue <= midpoint;
+    final localValue = isLowerHalf
+        ? _floorSliderValue
+        : _floorSliderValue - midpoint.round();
+    final localDivisions = midpoint.round();
+    final startColor = isLowerHalf ? _minFloorColor : _midFloorColor;
+    final endColor = isLowerHalf ? _midFloorColor : _maxFloorColor;
+    final baseRed = _interpolateInt(localValue, startColor.red, endColor.red, divisions: localDivisions);
+    final baseGreen = _interpolateInt(localValue, startColor.green, endColor.green, divisions: localDivisions);
+    final baseBlue = _interpolateInt(localValue, startColor.blue, endColor.blue, divisions: localDivisions);
+    final biasOffset = (contrastBias * 120).round();
+    return Color.fromARGB(
+      255,
+      (baseRed - biasOffset).clamp(0, 255),
+      (baseGreen - biasOffset).clamp(0, 255),
+      (baseBlue - biasOffset).clamp(0, 255),
+    );
+  }
+  String get darkFloorHex => '#'
+      '${darkFloorColor.red.toRadixString(16).padLeft(2, '0').toUpperCase()}'
+      '${darkFloorColor.green.toRadixString(16).padLeft(2, '0').toUpperCase()}'
+      '${darkFloorColor.blue.toRadixString(16).padLeft(2, '0').toUpperCase()}';
+
+  double get darkDancerFillFactor =>
+      (_baseDancerFillFactor + contrastBias).clamp(0.5, 0.98);
+  double get darkDancerStrokeFactor =>
+      max(0.0, darkDancerFillFactor - (_strokeOffset + (contrastBias * 0.25)));
+
+  void setFloorSliderValue(double value) {
+    final nextValue = value.round().clamp(0, sliderDivisions);
+    if (nextValue == _floorSliderValue) return;
+    _floorSliderValue = nextValue;
+    notifyListeners();
+  }
+
+  void setDancerSliderValue(double value) {
+    final nextValue = value.round().clamp(0, sliderDivisions);
+    if (nextValue == _dancerSliderValue) return;
+    _dancerSliderValue = nextValue;
+    notifyListeners();
+  }
+
+  void setContrastSliderValue(double value) {
+    final nextValue = value.round().clamp(0, sliderDivisions);
+    if (nextValue == _contrastSliderValue) return;
+    _contrastSliderValue = nextValue;
+    notifyListeners();
+  }
+
+  void togglePanelExpanded() {
+    _isPanelExpanded = !_isPanelExpanded;
+    notifyListeners();
+  }
+
+  void reset() {
+    _floorSliderValue = 2702;
+    _dancerSliderValue = 1711;
+    _contrastSliderValue = 2283;
+    notifyListeners();
+  }
+
+  static int _interpolateInt(int sliderValue, int minValue, int maxValue, {int? divisions}) {
+    final ratio = sliderValue / (divisions ?? sliderDivisions);
+    return (minValue + ((maxValue - minValue) * ratio)).round();
+  }
+
+  static double _interpolateDouble(int sliderValue, double minValue, double maxValue) {
+    final ratio = sliderValue / sliderDivisions;
+    return minValue + ((maxValue - minValue) * ratio);
+  }
+}
+
+class DanceThemeTuningPanel extends fm.StatelessWidget {
+  final bool showsToggleButton;
+
+  const DanceThemeTuningPanel({
+    super.key,
+    this.showsToggleButton = true,
+  });
+
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return pp.Consumer<DanceThemeTuning>(
+      builder: (context, tuning, _) => fm.Container(
+        color: const Color(0xFF161616),
+        padding: const fm.EdgeInsets.fromLTRB(12, 8, 12, 10),
+        child: fm.Column(
+          crossAxisAlignment: fm.CrossAxisAlignment.start,
+          children: [
+            fm.Row(
+              children: [
+                if (showsToggleButton) const DanceThemeTuningToggleButton(),
+                if (tuning.isPanelExpanded)
+                  fm.Text(
+                    'Theme Tuning',
+                    style: fm.TextStyle(
+                      color: Color.WHITE,
+                      fontSize: 12,
+                      fontWeight: fm.FontWeight.w600,
+                    ),
+                  ),
+                const fm.Spacer(),
+                if (tuning.isPanelExpanded)
+                  fm.TextButton(
+                    onPressed: tuning.reset,
+                    child: const fm.Text('Reset'),
+                  ),
+              ],
+            ),
+            if (tuning.isPanelExpanded) ...[
+              DanceThemeTuningSliderRow(
+                label: 'Floor',
+                detail: '${tuning.floorSliderValue}/4095  ${tuning.darkFloorHex}',
+                value: tuning.floorSliderValue.toDouble(),
+                onChanged: tuning.setFloorSliderValue,
+              ),
+              DanceThemeTuningSliderRow(
+                label: 'Dancers',
+                detail:
+                    '${tuning.dancerSliderValue}/4095  fill ${tuning.darkDancerFillFactor.toStringAsFixed(3)}  outline ${tuning.darkDancerStrokeFactor.toStringAsFixed(3)}',
+                value: tuning.dancerSliderValue.toDouble(),
+                onChanged: tuning.setDancerSliderValue,
+              ),
+              DanceThemeTuningSliderRow(
+                label: 'Contrast',
+                detail:
+                    '${tuning.contrastSliderValue}/4095  bias ${tuning.contrastBias >= 0 ? '+' : ''}${tuning.contrastBias.toStringAsFixed(3)}',
+                value: tuning.contrastSliderValue.toDouble(),
+                onChanged: tuning.setContrastSliderValue,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DanceThemeTuningToggleButton extends fm.StatelessWidget {
+  const DanceThemeTuningToggleButton({super.key});
+
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return pp.Consumer<DanceThemeTuning>(
+      builder: (context, tuning, _) => fm.IconButton(
+        onPressed: tuning.togglePanelExpanded,
+        tooltip: tuning.isPanelExpanded ? 'Hide theme tuning' : 'Show theme tuning',
+        icon: fm.Icon(
+          fm.Icons.dehaze,
+          color: Color.WHITE,
+          size: 18,
+        ),
+      ),
+    );
+  }
+}
+
+class DanceThemeTuningSliderRow extends fm.StatelessWidget {
+  final String label;
+  final String detail;
+  final double value;
+  final fm.ValueChanged<double> onChanged;
+
+  const DanceThemeTuningSliderRow({
+    super.key,
+    required this.label,
+    required this.detail,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return fm.Column(
+      crossAxisAlignment: fm.CrossAxisAlignment.start,
+      children: [
+        fm.Text(
+          '$label  $detail',
+          style: fm.TextStyle(color: Color.WHITE, fontSize: 11),
+        ),
+        fm.SliderTheme(
+          data: const fm.SliderThemeData(
+            trackHeight: 3,
+            thumbShape: fm.RoundSliderThumbShape(enabledThumbRadius: 7),
+          ),
+          child: fm.Slider(
+            value: value,
+            min: 0,
+            max: DanceThemeTuning.sliderDivisions.toDouble(),
+            divisions: DanceThemeTuning.sliderDivisions,
+            activeColor: const Color(0xFFE6A800),
+            inactiveColor: const Color(0xFF5A5A5A),
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class DancePainter extends fm.CustomPainter  {
+  static const _darkPathAlpha = 90;
 
   //  Shapes for drawing dancers
   //  rectangle for boys
@@ -54,10 +284,19 @@ class DancePainter extends fm.CustomPainter  {
   //  Create the painter by passing the animation beater
   //  This will make it repaint every animation frame whenever
   //  the beater is ticking
-  DancePainter(this.model) : super(repaint:model.beater) {
+  bool darkMode;
+  final DanceThemeTuning? themeTuning;
+  DancePainter(this.model, {this.darkMode = false, this.themeTuning})
+      : super(repaint: themeTuning == null
+            ? model.beater
+            : fm.Listenable.merge([model.beater, themeTuning])) {
     _prevbeat = 0; // model.beater.beat;
     computePaths();
   }
+
+  Color get _darkFloorColor => themeTuning?.darkFloorColor ?? const Color(0xFF242424);
+  double get _darkDancerFillFactor => themeTuning?.darkDancerFillFactor ?? 0.78;
+  double get _darkDancerStrokeFactor => themeTuning?.darkDancerStrokeFactor ?? 0.68;
 
   @override
   bool shouldRepaint(covariant fm.CustomPainter oldDelegate) {
@@ -121,8 +360,11 @@ class DancePainter extends fm.CustomPainter  {
   /// @param c  Canvas to draw to
   void drawPath(fm.Canvas c, Dancer d) {
     //  The path color is a partly transparent version of the draw color
+    final pathColor = darkMode
+        ? d.drawColor.darker(_darkDancerStrokeFactor).withAlpha(_darkPathAlpha)
+        : d.drawColor.withAlpha(128);
     var p = fm.Paint()
-      ..color = d.drawColor.withAlpha(128)
+      ..color = pathColor
       ..style = fm.PaintingStyle.stroke
       ..strokeWidth = 0.1;
     c.drawPath(paths[d]!, p);
@@ -237,7 +479,7 @@ class DancePainter extends fm.CustomPainter  {
     _updateDancers();
     ctx.save();
     ctx.drawRect(fm.Rect.fromLTWH(0,0,size.width,size.height),
-        fm.Paint()..color = Color.FLOOR);
+        fm.Paint()..color = darkMode ? _darkFloorColor : Color.FLOOR);
     //  Save floor dimensions for calculating mouse coords to dancer
     _size = size.v;
     var range = min(size.width,size.height);
@@ -429,6 +671,10 @@ class DancePainter extends fm.CustomPainter  {
   void drawDancer(fm.Canvas c, Dancer d) {
     var dc = model.showColors ? d.drawColor : Color.GRAY;
     var fc = model.showColors ? d.fillColor : Color.LIGHTGREY;
+    if (darkMode) {
+      dc = dc.darker(_darkDancerStrokeFactor);
+      fc = fc.darker(_darkDancerFillFactor);
+    }
     c.save();
     //ctx.transform(d.tx);  not available on Flutter
     c.translate(d.location.x,d.location.y);

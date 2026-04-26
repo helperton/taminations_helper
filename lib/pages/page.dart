@@ -40,7 +40,7 @@ class Page extends fm.StatelessWidget {
     return pp.ChangeNotifierProvider(
       create: (_) => TitleModel(),
       child: fm.Scaffold(
-          backgroundColor: Color.GRAY,
+          backgroundColor: fm.Theme.of(context).scaffoldBackgroundColor,
           appBar: showsTitleBar
               ? fm.PreferredSize(
                   preferredSize: fm.Size.fromHeight(56.0),

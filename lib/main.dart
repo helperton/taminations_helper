@@ -51,11 +51,13 @@ class SidecarDockRequest {
   final fm.Rect hostFrame;
   final fm.Rect screenFrame;
   final fm.Rect? dockFrame;
+  final bool darkMode;
 
   SidecarDockRequest({
     required this.hostFrame,
     required this.screenFrame,
     this.dockFrame,
+    this.darkMode = false,
   });
 
   static SidecarDockRequest? fromLaunchArgs(List<String> args) {
@@ -74,7 +76,8 @@ class SidecarDockRequest {
     final dockValue = args
         .firstWhere((arg) => arg.startsWith('--sidecar-dock-frame='), orElse: () => '');
     final dockFrame = dockValue.isEmpty ? null : _parseRectArg(dockValue.split('=').last);
-    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame);
+    final darkMode = args.contains('--dark-mode');
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame, darkMode: darkMode);
   }
 
   static SidecarDockRequest? fromJson(Map<String, dynamic> json) {
@@ -84,7 +87,8 @@ class SidecarDockRequest {
       return null;
     }
     final dockFrame = _parseRectJson(json['dockFrame']);
-    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame);
+    final darkMode = json['darkMode'] as bool? ?? false;
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame, darkMode: darkMode);
   }
 
   static fm.Rect? _parseRectArg(String raw) {
@@ -151,9 +155,11 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
   static const sidecarTopOffset = 40.0;
   static const sidecarWidthRatio = 0.16;
   static const sidecarHeightRatio = 0.94;
+  static const sidecarDarkBackground = fm.Color(0xFF000000);
   late final TaminationsRouterDelegate _routerDelegate;
   final TaminationsRouteInformationParser _routeInformationParser =
       TaminationsRouteInformationParser();
+  final ValueNotifier<bool> _darkMode = ValueNotifier(true);
 
   @override
   void initState() {
@@ -162,6 +168,9 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       initialMainPage: widget.initialDockRequest != null ? MainPage.SEQUENCER : null,
       initialSidecarMode: widget.initialDockRequest != null,
     );
+    if (widget.initialDockRequest != null) {
+      _darkMode.value = widget.initialDockRequest!.darkMode;
+    }
     tamHelperApiServer.setDockWindowHandler(_handleDockRequestJson);
     tamHelperApiServer.setWindowDebugInfoProvider(_windowDebugInfo);
   }
@@ -211,6 +220,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                     providers: [
                       pp.ChangeNotifierProvider(create: (_) => Settings()),
                       pp.ChangeNotifierProvider(create: (_) => AnimationState()),
+                      pp.ChangeNotifierProvider(create: (_) => DanceThemeTuning()),
                       pp.ChangeNotifierProvider(create: (_) => AbbreviationsModel()),
                       pp.ChangeNotifierProvider(create: (context) {
                         final model = SequencerModel(context);
@@ -220,19 +230,38 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                       pp.ChangeNotifierProvider(create: (_) => HighlightState()),
                       pp.Provider(create: (_) => VirtualKeyboardVisible())
                     ],
-                    child: fm.MaterialApp.router(
-                      debugShowCheckedModeBanner: false,
-                      theme: fm.ThemeData(
-                        fontFamily: 'Roboto',
-                        textTheme: GoogleFonts.robotoTextTheme(),
-                        scrollbarTheme: fm.ScrollbarThemeData(
-                          thumbColor:
-                              fm.WidgetStateColor.resolveWith((states) => Color.TRANSPARENTGREY),
+                    child: fm.ValueListenableBuilder<bool>(
+                      valueListenable: _darkMode,
+                      builder: (context, isDark, _) => fm.MaterialApp.router(
+                        debugShowCheckedModeBanner: false,
+                        theme: fm.ThemeData(
+                          fontFamily: 'Roboto',
+                          brightness: fm.Brightness.light,
+                          textTheme: GoogleFonts.robotoTextTheme(),
+                          scrollbarTheme: fm.ScrollbarThemeData(
+                            thumbColor:
+                                fm.WidgetStateColor.resolveWith((states) => Color.TRANSPARENTGREY),
+                          ),
                         ),
+                        darkTheme: fm.ThemeData(
+                          fontFamily: 'Roboto',
+                          brightness: fm.Brightness.dark,
+                          scaffoldBackgroundColor: sidecarDarkBackground,
+                          colorScheme: const fm.ColorScheme.dark(
+                            surface: sidecarDarkBackground,
+                            primary: fm.Color(0xFF90CAF9),
+                          ),
+                          textTheme: GoogleFonts.robotoTextTheme(fm.ThemeData.dark().textTheme),
+                          scrollbarTheme: fm.ScrollbarThemeData(
+                            thumbColor:
+                                fm.WidgetStateColor.resolveWith((states) => Color.TRANSPARENTGREY),
+                          ),
+                        ),
+                        themeMode: isDark ? fm.ThemeMode.dark : fm.ThemeMode.light,
+                        title: 'Taminations',
+                        routerDelegate: _routerDelegate,
+                        routeInformationParser: _routeInformationParser,
                       ),
-                      title: 'Taminations',
-                      routerDelegate: _routerDelegate,
-                      routeInformationParser: _routeInformationParser,
                     )))
             //  Future not ready yet
             : fm.Container(
@@ -295,6 +324,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     if (!TamUtils.isWindowDevice) {
       return;
     }
+    _darkMode.value = request.darkMode;
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
     }
@@ -361,11 +391,11 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
   TaminationsRouterDelegate({MainPage? initialMainPage, bool initialSidecarMode = false})
       : navigatorKey = fm.GlobalKey<fm.NavigatorState>(),
         appState = TamState(
-          mainPage: initialMainPage ?? MainPage.LEVELS,
+          mainPage: initialMainPage ?? MainPage.SEQUENCER,
           detailPage: DetailPage.NONE,
           sidecarMode: initialSidecarMode,
-          formation: initialMainPage == MainPage.SEQUENCER ? 'Squared Set' : null,
-          calls: initialMainPage == MainPage.SEQUENCER ? '' : null,
+          formation: (initialMainPage ?? MainPage.SEQUENCER) == MainPage.SEQUENCER ? 'Squared Set' : null,
+          calls: (initialMainPage ?? MainPage.SEQUENCER) == MainPage.SEQUENCER ? '' : null,
         ) {
     tamHelperApiServer.setAppState(appState);
   }

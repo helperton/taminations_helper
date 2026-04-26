@@ -29,6 +29,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_to_text_provider.dart';
 
 import '../common_flutter.dart';
+import '../dance_painter.dart';
 import '../pages/calls_page.dart';
 import '../pages/page.dart';
 import 'abbreviations_model.dart';
@@ -47,20 +48,24 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
 
   @override
   fm.Widget build(fm.BuildContext context) {
-    return pp.Consumer<SequencerModel>(
-         builder: (context, model, child) {
+    return pp.Consumer2<SequencerModel, DanceThemeTuning>(
+         builder: (context, model, tuning, child) {
+           final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+           final backgroundColor = isDark ? tuning.darkFloorColor : null;
            return fm.LayoutBuilder(
              builder: (context,constraints) => fm.Column(
                children: [
                  SequencerEditLine(),
                  if (!isSmallAndCompact(context))
                    fm.Expanded(
+                       child: fm.Container(
+                         color: backgroundColor,
                        child: ScrollablePositionedList.builder(
                          itemScrollController: itemScrollController,
                          itemPositionsListener: itemPositionsListener,
                          itemCount: model.calls.length,
                          itemBuilder: itemBuilder,
-                       )
+                       ))
                    ),
                  fm.Container(
                    constraints: const fm.BoxConstraints.expand(height: 1),
@@ -89,22 +94,28 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
                   curve: fm.Curves.easeInOutCubic);
             });
           }
+          final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+          final levelColor = call?.level?.color;
+          final itemColor = (index == currentCall)
+              ? (isDark ? const Color(0xFFE6A800) : Color.YELLOW)
+              : isDark
+                  ? (levelColor?.darker(0.45) ?? const Color(0xFF2A2A2A))
+                  : (levelColor ?? Color.WHITE);
+          final borderColor = isDark ? const Color(0xFF444444) : Color.BLACK;
           return fm.Container(
             decoration: fm.BoxDecoration(
-                border: fm.Border(top: fm.BorderSide(width: 1, color: Color.BLACK))),
+                border: fm.Border(top: fm.BorderSide(width: 1, color: borderColor))),
             child: fm.Material(
-              color: (index == currentCall)
-                  ? Color.YELLOW
-                  : (call?.level?.color ?? Color.WHITE),
+              color: itemColor,
               child:
                   model.isComment(call?.name ?? '#')
-                      ? _OneLine(call?.name ?? '','')
+                      ? _OneLine(call?.name ?? '','', isDark)
                       : fm.InkWell(
-                      highlightColor: call?.level?.color.darker() ?? Color.WHITE,
+                      highlightColor: levelColor?.darker() ?? Color.WHITE,
                       onTap: () {
                         model.animateAtCall(index);
                       },
-                      child: _OneLine(call?.name ?? '',call?.level?.name ?? ''))
+                      child: _OneLine(call?.name ?? '',call?.level?.name ?? '', isDark))
             )
           );
         });
@@ -115,16 +126,19 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
 class SequenceEditButtons extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) {
-    return fm.Container(
-      color: Color.FLOOR,
-      child: fm.Row(
-        children: [
-          SequencerUndoButton(),
-          SequencerResetButton(),
-          SequencerCopyButton(),
-          SequencerPasteButton()
-        ]
-      )
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    return pp.Consumer<DanceThemeTuning>(
+      builder: (context, tuning, _) => fm.Container(
+        color: isDark ? tuning.darkFloorColor : Color.FLOOR,
+        child: fm.Row(
+          children: [
+            SequencerUndoButton(),
+            SequencerResetButton(),
+            SequencerCopyButton(),
+            SequencerPasteButton(),
+          ]
+        ),
+      ),
     );
   }
 }
@@ -235,8 +249,11 @@ class _SequencerEditLineState extends fm.State<SequencerEditLine> {
         });
       }
 
+      final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+      final themeTuning = pp.Provider.of<DanceThemeTuning>(context, listen: false);
+      final logBackgroundColor = isDark ? themeTuning.darkFloorColor : Color.FLOOR;
       return fm.Container(
-        color: Color.WHITE,
+        color: logBackgroundColor,
         padding: fm.EdgeInsets.only(left: 10),
         child: fm.Row(
           children: [
@@ -277,7 +294,7 @@ class _SequencerEditLineState extends fm.State<SequencerEditLine> {
             else
               fm.Expanded(
                   child:fm.Material(
-                    color: Color.WHITE,
+                    color: logBackgroundColor,
                     child: fm.InkWell(
                       key: fm.ValueKey('Tap to start Sequence'),
                       onTap: () {
@@ -450,23 +467,27 @@ class SequencerPasteButton extends fm.StatelessWidget {
 class _OneLine extends fm.StatelessWidget {
   final String name;
   final String level;
-  _OneLine(this.name,[this.level='']);
+  final bool isDark;
+  _OneLine(this.name,[this.level='', this.isDark = false]);
 
   @override
-  fm.Widget build(fm.BuildContext context) => fm.Row(
-    children: [
-      fm.Flexible(
-        child: fm.Container(
-            alignment: fm.Alignment.centerLeft,
-            padding: fm.EdgeInsets.only(left: 20.0),
-            child: AutoSizeText(name, style: fm.TextStyle(fontSize: 20))
+  fm.Widget build(fm.BuildContext context) {
+    final textColor = isDark ? Color.WHITE : Color.BLACK;
+    return fm.Row(
+      children: [
+        fm.Flexible(
+          child: fm.Container(
+              alignment: fm.Alignment.centerLeft,
+              padding: fm.EdgeInsets.only(left: 20.0),
+              child: AutoSizeText(name, style: fm.TextStyle(fontSize: 20, color: textColor))
+          ),
         ),
-      ),
-      fm.Container(
-          alignment: fm.Alignment.topRight,
-          padding: fm.EdgeInsets.only(top:2,right:2),
-          child: fm.Text(level)
-      )
-    ],
-  );
+        fm.Container(
+            alignment: fm.Alignment.topRight,
+            padding: fm.EdgeInsets.only(top:2,right:2),
+            child: fm.Text(level, style: fm.TextStyle(color: textColor.darker()))
+        )
+      ],
+    );
+  }
 }

@@ -23,6 +23,20 @@ import 'package:flutter/material.dart' as fm;
 
 import 'color.dart';
 
+class _ButtonLabel extends fm.StatelessWidget {
+  final String name;
+  const _ButtonLabel(this.name);
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    return AutoSizeText(name, maxLines: 1, style: fm.TextStyle(
+      fontWeight: fm.FontWeight.bold,
+      fontSize: 20,
+      color: isDark ? Color.WHITE : Color.BLACK,
+    ));
+  }
+}
+
 class Button extends fm.StatelessWidget {
 
   final String name;
@@ -30,10 +44,7 @@ class Button extends fm.StatelessWidget {
   final fm.VoidCallback? onPressed;
 
   Button(this.name, {fm.Widget? child, this.onPressed}) :
-    child = child ?? AutoSizeText(name, maxLines: 1, style: fm.TextStyle(
-      fontWeight: fm.FontWeight.bold,
-      fontSize: 20,
-    )),
+    child = child ?? _ButtonLabel(name),
         super(key: fm.Key(name));
 
   @override
@@ -81,21 +92,25 @@ class _ButtonContainer extends fm.StatelessWidget {
   final fm.Widget child;
   _ButtonContainer(this.child);
   @override
-  fm.Widget build(fm.BuildContext context) =>
-      fm.Container(
-          decoration: fm.ShapeDecoration(
-              shape: fm.RoundedRectangleBorder(
-                  side: fm.BorderSide(color: Color.GRAY.darker()),
-                  borderRadius: fm.BorderRadius.circular(10)
-              ),
-              gradient: fm.LinearGradient(
-                  begin: fm.Alignment.topCenter,
-                  end: fm.Alignment.bottomCenter,
-                  colors: [Color(0xffffffff), Color(0xffa0a0a0)]
-              )
-          ),
-          padding: fm.EdgeInsets.all(6.0),
-          child: fm.Center(child: child)
-      );
+  fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    return fm.Container(
+        decoration: fm.ShapeDecoration(
+            shape: fm.RoundedRectangleBorder(
+                side: fm.BorderSide(color: isDark ? Color(0xFF555555) : Color.GRAY.darker()),
+                borderRadius: fm.BorderRadius.circular(10)
+            ),
+            gradient: fm.LinearGradient(
+                begin: fm.Alignment.topCenter,
+                end: fm.Alignment.bottomCenter,
+                colors: isDark
+                    ? [Color(0xFF3D3530), Color(0xFF2D2520)]
+                    : [Color(0xffffffff), Color(0xffa0a0a0)]
+            )
+        ),
+        padding: fm.EdgeInsets.all(6.0),
+        child: fm.Center(child: child)
+    );
+  }
 }
 

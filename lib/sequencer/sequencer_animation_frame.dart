@@ -31,11 +31,12 @@ class SequencerAnimationFrame extends fm.StatelessWidget {
 
   @override
   fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
     return fm.Column(
       children: [
         BasicSequencerAnimation(),
         fm.Container(
-          color: Color.FLOOR,
+          color: isDark ? Color.BLACK : Color.FLOOR,
           child: fm.Row(
             children: [
               _SequencerHelpButton(),
@@ -61,25 +62,31 @@ class PortraitSequencerAnimationFrame extends fm.StatelessWidget {
         BasicSequencerAnimation(),
         fm.Expanded(
           flex: 1,
-          child: fm.Container(
-            color: Color.FLOOR,
-            child: fm.LayoutBuilder(
-              builder:(context,constraints) {
-                return fm.Column(
-                children: [
-                  SequencerUndoButton(),
-                  SequencerResetButton(),
-                  SequencerCopyButton(),
-                  SequencerPasteButton(),
-                  if (constraints.maxHeight > 50)
-                    ...[fm.Divider(color: Color.GRAY, height: 8),
-                  _SequencerHelpButton(),
-                  _SequencerSettingsButton(),
-                  _SequencerAbbrevButton(),
-                  _SequencerCallsButton()]
-                ]
-              ); }
-            ),
+          child: fm.Builder(
+            builder: (context) {
+              final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+              return fm.Container(
+                color: isDark ? Color.BLACK : Color.FLOOR,
+                child: fm.LayoutBuilder(
+                  builder:(context,constraints) {
+                    return fm.Column(
+                      children: [
+                        SequencerUndoButton(),
+                        SequencerResetButton(),
+                        SequencerCopyButton(),
+                        SequencerPasteButton(),
+                        if (constraints.maxHeight > 50)
+                          ...[fm.Divider(color: Color.GRAY, height: 8),
+                        _SequencerHelpButton(),
+                        _SequencerSettingsButton(),
+                        _SequencerAbbrevButton(),
+                        _SequencerCallsButton()]
+                      ]
+                    );
+                  }
+                ),
+              );
+            },
           ),
         )
       ],
@@ -91,6 +98,7 @@ class PortraitSequencerAnimationFrame extends fm.StatelessWidget {
 class BasicSequencerAnimation extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
     return fm.Expanded(
         flex: 4,
         child: fm.Stack(
@@ -104,7 +112,8 @@ class BasicSequencerAnimation extends fm.StatelessWidget {
                           AutoSizeText(model.currentCall < 0 ? ''
                               : model.calls[model.currentCall].name,
                               maxLines: 2,
-                              style: fm.TextStyle(fontSize: 28))
+                              style: fm.TextStyle(fontSize: 28,
+                                  color: isDark ? Color.WHITE : Color.BLACK))
                   )
               )
             ]
@@ -161,4 +170,3 @@ class _SequencerCallsButton extends fm.StatelessWidget {
     );
   }
 }
-

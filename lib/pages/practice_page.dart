@@ -126,7 +126,9 @@ class _PracticeFrameState extends fm.State<PracticeFrame>
 
   @override
   fm.Widget build(fm.BuildContext context) {
-    final dancePainter = DancePainter(danceModel);
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    final themeTuning = pp.Provider.of<DanceThemeTuning>(context, listen: false);
+    final dancePainter = DancePainter(danceModel, darkMode: isDark, themeTuning: themeTuning);
     _focusNode.requestFocus();
     return fm.KeyboardListener(
       onKeyEvent: (event) {

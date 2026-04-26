@@ -75,11 +75,12 @@ class AnimationPage extends fm.StatelessWidget {
         child: pp.Consumer2<TamState,TitleModel>(
             builder: (context, tamState, titleModel, _) {
               _startModel(context,tamState,titleModel);
+              final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
               return fm.Column(
                 children: [
                   fm.Expanded(child: AnimationFrame()),
                   fm.Container(
-                    color: Color.FLOOR,
+                    color: isDark ? Color.BLACK : Color.FLOOR,
                     child: ButtonRow()
                   )
                 ],
@@ -239,9 +240,14 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
           });
           return fm.Column(children: [
                 //  Dance area with animations
-                fm.Expanded(child: pp.Consumer2<Settings,SequencerModel>(
-                    builder: (context, settings, sequencerModel, child) {
-                      final painter = DancePainter(danceModel);
+                fm.Expanded(child: pp.Consumer3<Settings,SequencerModel,DanceThemeTuning>(
+                    builder: (context, settings, sequencerModel, themeTuning, child) {
+                      final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+                      final painter = DancePainter(
+                        danceModel,
+                        darkMode: isDark,
+                        themeTuning: themeTuning,
+                      );
                       //  Send current settings to the dance model
                       final setGeometry = Geometry.fromString(Settings.geometry).geometry;
                       var geometryChanged = setGeometry != danceModel.geometryType;
@@ -330,6 +336,13 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
                                     ),
                                     //  Note that fades out as animation starts
                                     _Note(),
+                                    if (isDark)
+                                      const fm.Positioned(
+                                        top: 8,
+                                        left: 8,
+                                        right: 8,
+                                        child: DanceThemeTuningPanel(),
+                                      ),
                                     //  Info to show at bottom right
                                     //  Sequencer Beat, Speed, Looping
                                     fm.Positioned(
@@ -419,15 +432,16 @@ class _Note extends fm.StatelessWidget {
 //  Slider to show current animation position
 class _Slider extends fm.StatelessWidget {
   @override
-  fm.Widget build(fm.BuildContext context) =>
-      fm.Container(
-        color: Color.LIGHTGRAY,
+  fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    return fm.Container(
+        color: isDark ? const Color(0xFF2A2A2A) : Color.LIGHTGRAY,
         child: fm.SliderTheme(
           data: fm.SliderThemeData(),
           child: pp.Consumer2<DanceModel,BeatNotifier>(
             builder:(context,danceModel,beater,child) => fm.Slider(
-              activeColor: Color.HIGHLIGHT,
-              inactiveColor: Color.GRAY,
+              activeColor: isDark ? const Color(0xFFE6A800) : Color.HIGHLIGHT,
+              inactiveColor: isDark ? const Color(0xFF555555) : Color.GRAY,
               value: danceModel.totalBeats > 2.0
                   ? min(100,(beater.beat + danceModel.leadin) * 100.0 / danceModel.totalBeats)
                   : 0.0,
@@ -441,81 +455,87 @@ class _Slider extends fm.StatelessWidget {
           ),
         ),
       );
-
+  }
 }
 
 //  Image below the slider showing tic marks, start, end, and any parts
 class _SliderTicks extends fm.StatelessWidget {
   @override
-  fm.Widget build(fm.BuildContext context) =>
-      pp.Consumer<DanceModel>(
+  fm.Widget build(fm.BuildContext context) {
+    final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+    return pp.Consumer<DanceModel>(
         builder: (context, danceModel,_) => fm.CustomPaint(
           painter: _SliderTicsPainter(
               beats: danceModel.totalBeats,
               parts: danceModel.partstr,
               isParts: danceModel.hasParts,
-              isCalls: danceModel.hasCalls
+              isCalls: danceModel.hasCalls,
+              darkMode: isDark
           ),
           size: fm.Size.fromHeight(40.0),
         ),
       );
+  }
 }
 
 //  Row of buttons to control animation
 class _AnimationButtons extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) =>
-    pp.Consumer<DanceModel>(
-      builder: (context,danceModel,_) {
-        final beater = pp.Provider.of<BeatNotifier>(context,listen: false);
-        return fm.Container(
-          color: Color.FLOOR,
-          child: fm.Row(
+      pp.Consumer<DanceModel>(
+        builder: (context,danceModel,_) {
+          final beater = pp.Provider.of<BeatNotifier>(context,listen: false);
+          final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
+          return fm.Container(
+            color: isDark ? Color.BLACK : Color.FLOOR,
+            child: fm.Row(
               children: [
                 _DanceActionButton(
-                    'Back One Part',
-                    fm.Icons.skip_previous,
-                    onPressed: () {
-                      danceModel.goToPreviousPart();
-                    }),
+                  'Back One Part',
+                  fm.Icons.skip_previous,
+                  onPressed: () {
+                    danceModel.goToPreviousPart();
+                  },
+                ),
                 _DanceActionButton(
-                    'Back 0.1 Step',
-                    fm.Icons.navigate_before,
-                    onPressed: () {
-                      danceModel.stepBack();
-                    }),
-                //  Play / Pause button
+                  'Back 0.1 Step',
+                  fm.Icons.navigate_before,
+                  onPressed: () {
+                    danceModel.stepBack();
+                  },
+                ),
                 _DanceActionButton(
                   'Play',
                   beater.isRunning
                       ? fm.Icons.pause
                       : fm.Icons.play_arrow,
                   onPressed: () {
-                    //  If running, turn it off
                     if (beater.isRunning) {
                       danceModel.doPause();
                     } else {
-                      //  Not running - start animation
                       danceModel.doPlay();
                     }
                   },
                 ),
                 _DanceActionButton(
-                    'Forward 0.1 Step',
-                    fm.Icons.navigate_next,
-                    onPressed: () {
-                      danceModel.stepForward();
-                    }),
-                _DanceActionButton('Forward One Part',
-                    fm.Icons.skip_next,
-                    onPressed: () {
-                      danceModel.goToNextPart();
-                    })
-              ]),
-        );
-      }
-    );
-
+                  'Forward 0.1 Step',
+                  fm.Icons.navigate_next,
+                  onPressed: () {
+                    danceModel.stepForward();
+                  },
+                ),
+                _DanceActionButton(
+                  'Forward One Part',
+                  fm.Icons.skip_next,
+                  onPressed: () {
+                    danceModel.goToNextPart();
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
 }
 
 class _ScaledIcon extends fm.StatelessWidget {
@@ -552,11 +572,14 @@ class _SliderTicsPainter extends fm.CustomPainter {
   List<double> partValues = [];
   Map<String,fm.TextPainter> textPainters = {};
 
+  bool darkMode;
+
   _SliderTicsPainter({
     required this.beats,
     required String parts,
     this.isParts=false,
-    this.isCalls=false
+    this.isCalls=false,
+    this.darkMode=false
   }) {
     //  The string of parts is the length of each part except the first,
     //  separated by semi-colons.
@@ -602,7 +625,7 @@ class _SliderTicsPainter extends fm.CustomPainter {
 
     //  Draw background
     ctx.drawRect(fm.Rect.fromLTWH(0,0,size.width,size.height),
-        fm.Paint()..color = Color.TICS);
+        fm.Paint()..color = darkMode ? const Color(0xFF2D3520) : Color.TICS);
 
     //  Draw tic marks
     var p = fm.Paint()

@@ -14,6 +14,7 @@ class MainFlutterWindow: NSWindow {
     self.contentViewController = flutterViewController
     self.setFrame(resizedFrame, display: true)
     self.level = .floating
+    self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
