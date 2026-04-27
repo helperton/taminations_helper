@@ -250,7 +250,7 @@ class _SequencerEditLineState extends fm.State<SequencerEditLine> {
       }
 
       final isDark = fm.Theme.of(context).brightness == fm.Brightness.dark;
-      final themeTuning = pp.Provider.of<DanceThemeTuning>(context, listen: false);
+      final themeTuning = pp.Provider.of<DanceThemeTuning>(context);
       final logBackgroundColor = isDark ? themeTuning.darkFloorColor : Color.FLOOR;
       return fm.Container(
         color: logBackgroundColor,

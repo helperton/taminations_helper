@@ -302,65 +302,81 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
                       //  Wrap dance area with widget to detect pointer events
                       //  Hook up mouse wheel
                       //  Need separate widget as GestureDetector doesn't handle it
-                      return fm.Listener(
-                        onPointerSignal: (fg.PointerSignalEvent event) {
-                          if (event is fg.PointerScrollEvent) {
-                            if (event.scrollDelta.dy < 0)
-                              danceModel.stepBack();
-                            else if (event.scrollDelta.dy > 0)
-                              danceModel.stepForward();
-                          }
-                        },
-                        //  Set up other mouse / tap actions
-                        child: fm.GestureDetector(
-                            onTapDown: tapDownHandler,
-                            onSecondaryTapDown: tapDownHandler,
-                            onTap: () {
-                              if (dancerTapped != null) {
-                                setState(() {
-                                  danceModel.togglePath(dancerTapped!);
-                                });
+                      return fm.Stack(
+                        children: [
+                          fm.Listener(
+                            onPointerSignal: (fg.PointerSignalEvent event) {
+                              if (event is fg.PointerScrollEvent) {
+                                if (event.scrollDelta.dy < 0)
+                                  danceModel.stepBack();
+                                else if (event.scrollDelta.dy > 0)
+                                  danceModel.stepForward();
                               }
                             },
-                            onLongPress: longPressHandler,
-                            onSecondaryTap: longPressHandler,
-                            //  Stack to show info on animation
-                            child: fm.RepaintBoundary(
-                              key: danceModel.keyForImageCopy,
-                              child: fm.Stack(
-                                  children: [
-                                    //  Finally here is the dance area widget
-                                    fm.CustomPaint(
-                                      painter: painter,
-                                      child: fm.Center(), // so CustomPaint gets sized correctly
-                                    ),
-                                    //  Note that fades out as animation starts
-                                    _Note(),
-                                    if (isDark)
-                                      const fm.Positioned(
-                                        top: 8,
-                                        left: 8,
-                                        right: 8,
-                                        child: DanceThemeTuningPanel(),
-                                      ),
-                                    //  Info to show at bottom right
-                                    //  Sequencer Beat, Speed, Looping
-                                    fm.Positioned(
-                                      bottom: 0.0,
-                                      right: 0.0,
-                                      child: fm.Row(
-                                        spacing: 10,
-                                        children: [
-                                          if (isSequencer)
-                                            _BeatText(),
-                                          _SpeedText(),
-                                          _LoopText()
-                                        ],
-                                      )
-                                    )
-                                  ]),
-                            )
-                        ),
+                            //  Set up other mouse / tap actions
+                            child: fm.GestureDetector(
+                                onTapDown: tapDownHandler,
+                                onSecondaryTapDown: tapDownHandler,
+                                onTap: () {
+                                  if (dancerTapped != null) {
+                                    setState(() {
+                                      danceModel.togglePath(dancerTapped!);
+                                    });
+                                  }
+                                },
+                                onLongPress: longPressHandler,
+                                onSecondaryTap: longPressHandler,
+                                //  Stack to show info on animation
+                                child: fm.RepaintBoundary(
+                                  key: danceModel.keyForImageCopy,
+                                  child: fm.Stack(
+                                      children: [
+                                        //  Finally here is the dance area widget
+                                        fm.CustomPaint(
+                                          painter: painter,
+                                          child: fm.Center(), // so CustomPaint gets sized correctly
+                                        ),
+                                        //  Note that fades out as animation starts
+                                        _Note(),
+                                        //  Info to show at bottom right
+                                        //  Sequencer Beat, Speed, Looping
+                                        fm.Positioned(
+                                          bottom: 0.0,
+                                          right: 0.0,
+                                          child: fm.Row(
+                                            mainAxisSize: fm.MainAxisSize.min,
+                                            spacing: 10,
+                                            children: [
+                                              if (isSequencer)
+                                                _BeatText(),
+                                              _SpeedText(),
+                                              _LoopText()
+                                            ],
+                                          )
+                                        )
+                                      ]),
+                                )
+                            ),
+                          ),
+                          //  Theme tuning toggle at bottom left — above the
+                          //  GestureDetector so it receives clicks
+                          if (isDark)
+                            fm.Positioned(
+                              bottom: 4.0,
+                              left: 4.0,
+                              child: fm.Column(
+                                crossAxisAlignment: fm.CrossAxisAlignment.start,
+                                mainAxisSize: fm.MainAxisSize.min,
+                                children: [
+                                  fm.SizedBox(
+                                    width: 280,
+                                    child: const DanceThemeTuningPanel(showsToggleButton: false),
+                                  ),
+                                  const DanceThemeTuningToggleButton(),
+                                ],
+                              ),
+                            ),
+                        ],
                       );
                     })),
 

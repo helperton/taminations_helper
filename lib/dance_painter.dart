@@ -138,57 +138,61 @@ class DanceThemeTuningPanel extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) {
     return pp.Consumer<DanceThemeTuning>(
-      builder: (context, tuning, _) => fm.Container(
-        color: const Color(0xFF161616),
-        padding: const fm.EdgeInsets.fromLTRB(12, 8, 12, 10),
-        child: fm.Column(
-          crossAxisAlignment: fm.CrossAxisAlignment.start,
-          children: [
-            fm.Row(
-              children: [
-                if (showsToggleButton) const DanceThemeTuningToggleButton(),
-                if (tuning.isPanelExpanded)
-                  fm.Text(
-                    'Theme Tuning',
-                    style: fm.TextStyle(
-                      color: Color.WHITE,
-                      fontSize: 12,
-                      fontWeight: fm.FontWeight.w600,
+      builder: (context, tuning, _) {
+        if (!showsToggleButton && !tuning.isPanelExpanded)
+          return const fm.SizedBox.shrink();
+        return fm.Container(
+          color: const Color(0xFF161616),
+          padding: const fm.EdgeInsets.fromLTRB(12, 8, 12, 10),
+          child: fm.Column(
+            crossAxisAlignment: fm.CrossAxisAlignment.start,
+            children: [
+              fm.Row(
+                children: [
+                  if (showsToggleButton) const DanceThemeTuningToggleButton(),
+                  if (tuning.isPanelExpanded)
+                    fm.Text(
+                      'Theme Tuning',
+                      style: fm.TextStyle(
+                        color: Color.WHITE,
+                        fontSize: 12,
+                        fontWeight: fm.FontWeight.w600,
+                      ),
                     ),
-                  ),
-                const fm.Spacer(),
-                if (tuning.isPanelExpanded)
-                  fm.TextButton(
-                    onPressed: tuning.reset,
-                    child: const fm.Text('Reset'),
-                  ),
+                  const fm.Spacer(),
+                  if (tuning.isPanelExpanded)
+                    fm.TextButton(
+                      onPressed: tuning.reset,
+                      child: const fm.Text('Reset'),
+                    ),
+                ],
+              ),
+              if (tuning.isPanelExpanded) ...[
+                DanceThemeTuningSliderRow(
+                  label: 'Floor',
+                  detail: '${tuning.floorSliderValue}/4095  ${tuning.darkFloorHex}',
+                  value: tuning.floorSliderValue.toDouble(),
+                  onChanged: tuning.setFloorSliderValue,
+                ),
+                DanceThemeTuningSliderRow(
+                  label: 'Dancers',
+                  detail:
+                      '${tuning.dancerSliderValue}/4095  fill ${tuning.darkDancerFillFactor.toStringAsFixed(3)}  outline ${tuning.darkDancerStrokeFactor.toStringAsFixed(3)}',
+                  value: tuning.dancerSliderValue.toDouble(),
+                  onChanged: tuning.setDancerSliderValue,
+                ),
+                DanceThemeTuningSliderRow(
+                  label: 'Contrast',
+                  detail:
+                      '${tuning.contrastSliderValue}/4095  bias ${tuning.contrastBias >= 0 ? '+' : ''}${tuning.contrastBias.toStringAsFixed(3)}',
+                  value: tuning.contrastSliderValue.toDouble(),
+                  onChanged: tuning.setContrastSliderValue,
+                ),
               ],
-            ),
-            if (tuning.isPanelExpanded) ...[
-              DanceThemeTuningSliderRow(
-                label: 'Floor',
-                detail: '${tuning.floorSliderValue}/4095  ${tuning.darkFloorHex}',
-                value: tuning.floorSliderValue.toDouble(),
-                onChanged: tuning.setFloorSliderValue,
-              ),
-              DanceThemeTuningSliderRow(
-                label: 'Dancers',
-                detail:
-                    '${tuning.dancerSliderValue}/4095  fill ${tuning.darkDancerFillFactor.toStringAsFixed(3)}  outline ${tuning.darkDancerStrokeFactor.toStringAsFixed(3)}',
-                value: tuning.dancerSliderValue.toDouble(),
-                onChanged: tuning.setDancerSliderValue,
-              ),
-              DanceThemeTuningSliderRow(
-                label: 'Contrast',
-                detail:
-                    '${tuning.contrastSliderValue}/4095  bias ${tuning.contrastBias >= 0 ? '+' : ''}${tuning.contrastBias.toStringAsFixed(3)}',
-                value: tuning.contrastSliderValue.toDouble(),
-                onChanged: tuning.setContrastSliderValue,
-              ),
             ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -199,13 +203,21 @@ class DanceThemeTuningToggleButton extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) {
     return pp.Consumer<DanceThemeTuning>(
-      builder: (context, tuning, _) => fm.IconButton(
-        onPressed: tuning.togglePanelExpanded,
-        tooltip: tuning.isPanelExpanded ? 'Hide theme tuning' : 'Show theme tuning',
-        icon: fm.Icon(
-          fm.Icons.dehaze,
-          color: Color.WHITE,
-          size: 18,
+      builder: (context, tuning, _) => fm.Container(
+        decoration: fm.BoxDecoration(
+          color: const Color(0xAA222222),
+          borderRadius: fm.BorderRadius.circular(6),
+        ),
+        child: fm.IconButton(
+          onPressed: tuning.togglePanelExpanded,
+          tooltip: tuning.isPanelExpanded ? 'Hide theme tuning' : 'Show theme tuning',
+          padding: const fm.EdgeInsets.all(6),
+          constraints: const fm.BoxConstraints.tightFor(width: 32, height: 32),
+          icon: fm.Icon(
+            fm.Icons.dehaze,
+            color: Color.WHITE,
+            size: 20,
+          ),
         ),
       ),
     );

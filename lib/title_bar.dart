@@ -80,8 +80,17 @@ class TitleBar extends fm.StatelessWidget {
 
                 return fm.Row(children: [
 
-                //  Back button
-                fm.BackButton(color: fm.Colors.white,
+                //  Use explicit button styling so the control can sit flush
+                //  against the leading edge without Material's default padding.
+                fm.IconButton(
+                    padding: fm.EdgeInsets.zero,
+                    constraints: const fm.BoxConstraints.tightFor(width: 44, height: 44),
+                    alignment: fm.Alignment.centerLeft,
+                    splashRadius: 22,
+                    icon: const fm.Icon(
+                      fm.Icons.arrow_back,
+                      color: fm.Colors.white,
+                    ),
                     onPressed: () {
                       fm.Navigator.maybePop(context);
                       fm.Router
