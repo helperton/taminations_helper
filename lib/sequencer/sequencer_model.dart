@@ -318,7 +318,7 @@ class SequencerModel extends fm.ChangeNotifier {
       undoReset();
   }
 
-  CallContext _contextFromAnimation() {
+  CallContext contextFromAnimation() {
     final formationName = _validFormationName(startingFormation);
     _startingFormation = formationName;
     var ctx = CallContext.fromFormation(Formation(formationName));
@@ -417,7 +417,7 @@ class SequencerModel extends fm.ChangeNotifier {
 
     else {
       var prevbeats = animation.beats;
-      var cctx = _contextFromAnimation();
+      var cctx = contextFromAnimation();
       cctx.interpretCall(call);
       cctx.performCall(tryDoYourPart: true);
       if (!cctx.callname.contains('(move in|step|gnat|back\\s*(up|away))'.ri))

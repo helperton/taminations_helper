@@ -6,6 +6,7 @@
 
   Endpoints:
     GET  /status   — health check, returns {"status":"ok"}
+    GET  /state    — current dancer state: positions, facing, formation, call history
     POST /reset    — clears the current sequence
     POST /undo     — removes the last N loaded calls
     POST /sequence — loads and animates a sequence
@@ -17,10 +18,12 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
+import 'dancer.dart';
 import 'sequencer/sequencer_model.dart';
 import 'tam_state.dart';
 
@@ -132,6 +135,15 @@ class TamHelperApiServer {
 
     if (request.method == 'POST' && path == 'sequence') {
       return await _handleSequence(request);
+    }
+
+    if (request.method == 'GET' && path == 'state') {
+      return _handleState();
+    }
+
+    if (request.method == 'POST' && path == 'exit') {
+      stop();
+      exit(0);
     }
 
     if (request.method == 'POST' && path == 'dock') {
@@ -317,6 +329,61 @@ class TamHelperApiServer {
 
     _lastResponseSummary = 'ok — loaded ${calls.length} call(s)';
     return _jsonOk({'ok': true, 'callCount': calls.length});
+  }
+
+  Response _handleState() {
+    final model = _sequencerModel;
+    if (model == null) {
+      return _jsonOk({'ok': false, 'error': 'sequencer not ready'});
+    }
+
+    try {
+      final ctx = model.contextFromAnimation();
+      ctx.analyze();
+
+      final dancers = <Map<String, dynamic>>[];
+      for (final d in ctx.dancers) {
+        dancers.add({
+          'number': d.number,
+          'couple': d.numberCouple,
+          'gender': d.gender == Gender.BOY ? 'boy' : d.gender == Gender.GIRL ? 'girl' : 'phantom',
+          'x': (d.location.x * 1000).round() / 1000.0,
+          'y': (d.location.y * 1000).round() / 1000.0,
+          'angleDegrees': (d.angleFacing * 180 / pi * 10).round() / 10.0,
+          'beau': d.data.beau,
+          'belle': d.data.belle,
+          'leader': d.data.leader,
+          'trailer': d.data.trailer,
+          'center': d.data.center,
+          'end': d.data.end,
+        });
+      }
+
+      String? detectedFormation;
+      if (ctx.isSquare()) detectedFormation = 'Squared Set';
+      else if (ctx.isWaves()) detectedFormation = 'Waves';
+      else if (ctx.isTwoFacedLines()) detectedFormation = 'Two-Faced Lines';
+      else if (ctx.isLines()) detectedFormation = 'Lines';
+      else if (ctx.isColumns()) detectedFormation = 'Columns';
+      else if (ctx.isTidal()) detectedFormation = 'Tidal';
+      else if (ctx.isThar()) detectedFormation = 'Thar';
+      else if (ctx.isDiamond()) detectedFormation = 'Diamond';
+      else if (ctx.isTBone()) detectedFormation = 'T-Bone';
+
+      final warning = model.errorString.isNotEmpty ? model.errorString : null;
+
+      return _jsonOk({
+        'ok': true,
+        'callCount': model.calls.length,
+        'calls': model.calls.map((c) => c.name).toList(),
+        'startingFormation': model.startingFormation,
+        'detectedFormation': detectedFormation,
+        'warning': warning,
+        'dancers': dancers,
+      });
+    } catch (e) {
+      return _jsonOk({'ok': false, 'error': 'Failed to read state: $e'});
+    }
   }
 
   /// Returns a human-readable debug snapshot for display in the UI.
