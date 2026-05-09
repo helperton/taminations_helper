@@ -135,6 +135,13 @@ void main(List<String> args) async {
   await prefsWithCache.setString('Starting Formation', 'Squared Set');
 
   await tamHelperApiServer.start();
+
+  final tokenArg = args.firstWhere(
+      (arg) => arg.startsWith('--sc-token='), orElse: () => '');
+  if (tokenArg.isNotEmpty) {
+    tamHelperApiServer.setExpectedToken(tokenArg.split('=').last);
+  }
+
   fm.runApp(TaminationsApp(initialDockRequest: SidecarDockRequest.fromLaunchArgs(args)));
 }
 

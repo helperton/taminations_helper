@@ -49,6 +49,18 @@ Promenade Corner''';
 
   @override
   void performCall(CallContext ctx) {
+    //  Short variant: skip the axis snap and Counter Rotate loop.
+    //  performOne moves each dancer directly to their home promenade position,
+    //  then Half Wheel Around + adjustToFormation finishes the call.
+    if (name.toLowerCase().contains('short')) {
+      if (ctx.dancers.length != 8)
+        throw CallError('Only for 4 couples at this point.');
+      super.performCall(ctx);
+      ctx.applyCalls('Half Wheel Around');
+      ctx.adjustToFormation(Formation('Squared Set'));
+      ctx.level = LevelData.B1;
+      return;
+    }
     if (!name.endsWith('Home') && !name.contains('Corner'))
       throw CallError('Use either Promenade Home or Promenade <fraction>');
     if (ctx.dancers.length != 8)
@@ -105,6 +117,15 @@ Promenade Corner''';
 
   @override
   Path performOne(Dancer d, CallContext ctx) {
+    //  Short variant: move directly to home promenade position (no axis snap).
+    //  Home angle uses the same formula as the normal Counter Rotate loop terminator.
+    if (name.toLowerCase().contains('short')) {
+      var homeAngle = (d.numberCouple.i + 1.0) * pi / 2.0;
+      var homeVec = Vector(cos(homeAngle) * 2.0, sin(homeAngle) * 2.0);
+      var targetLocation = homeVec * (d.gender == Gender.BOY ? 1.0 : 1.5);
+      var targetAngle = homeVec.angle + pi / 2.0;
+      return ctx.moveToPosition(d, targetLocation, targetAngle);
+    }
     var num = (d.gender == Gender.GIRL && name.contains('Corner'))
         ? d.numberCouple.i % 4 + 1
         : d.numberCouple.i;

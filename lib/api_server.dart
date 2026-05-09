@@ -29,13 +29,17 @@ import 'tam_state.dart';
 
 class TamHelperApiServer {
   static const port = 7234;
-  static const debugBuildMarker = 'dock-debug-8';
+  static const debugBuildMarker = 'dock-debug-9';
 
   SequencerModel? _sequencerModel;
   TamState? _appState;
   Future<void> Function(Map<String, dynamic> request)? _dockWindow;
   Future<Map<String, dynamic>> Function()? _windowDebugInfoProvider;
   HttpServer? _server;
+
+  // Auth: expected SC token. Null until first request arrives (TOFU).
+  // Set at startup via setExpectedToken() if launched with --sc-token.
+  String? _expectedScToken;
 
   // Debug state — updated on every /sequence request.
   String? _lastFormation;
@@ -52,6 +56,25 @@ class TamHelperApiServer {
 
   void setAppState(TamState state) {
     _appState = state;
+  }
+
+  void setExpectedToken(String? token) {
+    if (token != null && token.isNotEmpty) {
+      _expectedScToken = token;
+    }
+  }
+
+  // Returns true and establishes the expected token (TOFU) on first use.
+  // After the token is locked in, rejects requests with a missing or wrong token.
+  bool _isAuthorized(Request request) {
+    final incoming = request.headers['x-sc-token'] ?? '';
+    if (_expectedScToken == null) {
+      if (incoming.isNotEmpty) {
+        _expectedScToken = incoming;
+      }
+      return true;
+    }
+    return incoming == _expectedScToken;
   }
 
   void setDockWindowHandler(Future<void> Function(Map<String, dynamic> request) handler) {
@@ -97,6 +120,12 @@ class TamHelperApiServer {
   Future<Response> _router(Request request) async {
     final path = request.url.path;
 
+    if (!_isAuthorized(request)) {
+      return Response(403,
+          body: jsonEncode({'error': 'unauthorized'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+
     if (request.method == 'GET' && path == 'status') {
       final ready = _appState != null;
       return _jsonOk({'status': 'ok', 'port': port, 'ready': ready});
@@ -108,6 +137,7 @@ class TamHelperApiServer {
       return _jsonOk({
         'debugBuildMarker': debugBuildMarker,
         'runtimeBuildInfo': runtimeBuildInfo,
+        'authTokenSet': _expectedScToken != null,
         'sequencerModelSet': _sequencerModel != null,
         'appStateSet': _appState != null,
         'ready': _appState != null,
@@ -371,14 +401,19 @@ class TamHelperApiServer {
       else if (ctx.isTBone()) detectedFormation = 'T-Bone';
 
       final warning = model.errorString.isNotEmpty ? model.errorString : null;
+      final totalBeats = model.totalBeats();
+      final lastCallBeats = model.calls.isNotEmpty ? model.calls.last.beats : 0.0;
 
       return _jsonOk({
         'ok': true,
         'callCount': model.calls.length,
         'calls': model.calls.map((c) => c.name).toList(),
+        'callLevels': model.calls.map((c) => c.level?.dir ?? '').toList(),
         'startingFormation': model.startingFormation,
         'detectedFormation': detectedFormation,
         'warning': warning,
+        'totalBeats': (totalBeats * 10).round() / 10.0,
+        'lastCallBeats': (lastCallBeats * 10).round() / 10.0,
         'dancers': dancers,
       });
     } catch (e) {
