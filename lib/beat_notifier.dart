@@ -30,17 +30,11 @@ class BeatNotifier extends fm.ChangeNotifier {
   static const FASTSPEED = 200.0;
   static const LUDICROUSSPEED = 10.0;
 
-  static const speedNames = {
-    'Slow':SLOWSPEED,
-    'Moderate':MODERATESPEED,
-    'Normal':NORMALSPEED,
-    'Fast':FASTSPEED,
-    'Ludicrous':LUDICROUSSPEED,
-  };
 
   late Ticker _ticker;
   var _beat = 0.0;
   var _startBeat = 0.0;
+  var _speed = 500.0;  // 'Normal' speed
   double get startBeat => _startBeat;
   var _endBeat = 0.0;
   double get endBeat => _endBeat;
@@ -53,8 +47,7 @@ class BeatNotifier extends fm.ChangeNotifier {
     _ticker = Ticker((_) {
       final now = DateTime.now();
       final diff = now.difference(_lastTime).inMilliseconds;
-      final speed = speedNames[Settings.speed] ?? NORMALSPEED;
-      _beat += diff / speed;
+      _beat += diff / _speed;
       if (_beat > _endBeat) {
         stop();
         isFinished = true;
@@ -68,6 +61,10 @@ class BeatNotifier extends fm.ChangeNotifier {
     _startBeat = start;
     _endBeat = end;
     _beat = _startBeat;
+  }
+
+  void setSpeed(double speed) {
+    _speed = speed;
   }
 
   double get beat => _beat;

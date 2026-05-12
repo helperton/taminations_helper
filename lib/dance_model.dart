@@ -29,6 +29,23 @@ import 'animated_call.dart';
 import 'common_flutter.dart';
 import 'practice_dancer.dart';
 
+const SLOWSPEED = 1500.0;
+const MODERATESPEED = 1000.0;
+const NORMALSPEED = 500.0;
+const FASTSPEED = 200.0;
+const LUDICROUSSPEED = 10.0;
+
+const speedNames = {
+  'Slow':SLOWSPEED,
+  'Moderate':MODERATESPEED,
+  'Normal':NORMALSPEED,
+  'Fast':FASTSPEED,
+  'Ludicrous':LUDICROUSSPEED,
+};
+
+
+
+
 class SequencerDanceModel extends DanceModel {
 
   SequencerDanceModel([fm.BuildContext? context]) : super(context) {
@@ -50,18 +67,13 @@ class PracticeDanceModel extends DanceModel {
 
   @override bool get gridVisibility => true;
   @override bool get looping => false;
-  @override String get speed => Settings.practiceSpeed;
+  @override double get speed => speedNames[Settings.practiceSpeed] ?? SLOWSPEED;
   @override String get showNumbers => 'None';
 
 }
 
 class DanceModel extends fm.ChangeNotifier {
 
-  static const SLOWSPEED = 1500.0;
-  static const MODERATESPEED = 1000.0;
-  static const NORMALSPEED = 500.0;
-  static const FASTSPEED = 200.0;
-  static const LUDICROUSSPEED = 10.0;
 
   AnimatedCall? _call;
   BeatNotifier beater;
@@ -83,7 +95,7 @@ class DanceModel extends fm.ChangeNotifier {
   double get practiceScore => _practiceScore;
   List<Dancer> dancers = [];
   PracticeDancer? practiceDancer;
-  var speed = Settings.speed;
+  double get speed =>  speedNames[Settings.speed] ?? NORMALSPEED;
   var _geometryType = Geometry.SQUARE;
   final _asymmetric = false;
   var _randomColors = false;
@@ -201,6 +213,7 @@ class DanceModel extends fm.ChangeNotifier {
   void doPlay() {
     if (!beater.isRunning) {
       _practiceScore = 0.0;
+      beater.setSpeed(speed);
       beater.start();
       later(() {
         notifyListeners();
@@ -292,8 +305,11 @@ class DanceModel extends fm.ChangeNotifier {
     final previousPart = _currentPart;
     //  Loop ?
     if (beater.isFinished && looping) {
-      goToStart();
-      beater.start();
+      later(() {  // or else stack overflow
+        goToStart();  // because this triggers another notification
+        beater.start();
+      });
+
     }
 
 
