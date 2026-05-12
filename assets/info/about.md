@@ -23,19 +23,18 @@ Call pronunciations provided by
 
 ---
 
-## Taminations version 1.6.106 built 2026-04-06
+## Taminations version 1.6.107 built 2026-05-12
 Copyright 2026 by Brad Christie.  
 This is free software, and you are welcome to modify and redistribute it
 under the terms of the [GNU GPL license](http://www.gnu.org/licenses/gpl.html).  
 
 ## What's New
-* Note that Explode the Line from tidal formations is ambiguous
-* Note some animations in Plus 2026 are A-1 only
-* Fix animation for Magic Something New
+* Space lines a little closer for some animations
+* Make sure Loop setting does not apply to sequencer or practice
+* Improved final formations for Shoot the Star
 * Sequencer:
-  * Fix Square the Set from dancers facing arbitrary angles
-  * Code for Triple Play But (something), Open Up and (anything)
-  * Fix Single Wheel from thar
+  * Fix for some cases of Diamond Circulate
+  * Squeeze from columns now works
 
 For a detailed history of changes, view the
 [Git log](https://github.com/bradchristie/taminations-flutter/commits/main)
