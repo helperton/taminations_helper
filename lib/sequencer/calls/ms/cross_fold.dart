@@ -61,40 +61,12 @@ class CrossFold extends Action {
       var dist = d.distanceTo(d2);
       var dxscale = 0.75;
 
-      //  The y-distance of Fold is 2.0, here we adjust that value
-      //  for various formations.  The dyoffset value computed is
-      //  subtracted from the default 2.0 to get the final y offset.
-      /*
-      var dyoffset = 0.0;
-      if (ctx.isTidal() && d.data.end)
-        dyoffset = -0.5;
-      else if (ctx.isTidal() && d.data.center)
-        dyoffset = 0.5;
-      else if (d.data.end)
-        dyoffset = 2.0 - dist*2;  // which wll generally be -2.0
-      if (!isRight)
-        dyoffset = -dyoffset;
-       */
       d.path = m.scale(dxscale,dist/2); // .skew(0.0,dyoffset);
 
-      //  Also set path for partner
-      //  This is an adjustment to shift the dancers into a standard formation
-      /*
-      var m2 = Stand;
-      if (d.isRightOf(d2))
-        m2 = DodgeRight;
-      else if (d.isLeftOf(d2))
-        m2 = DodgeLeft;
-      var myScale = 0.25;
-      if (ctx.isTidal())
-        myScale = 0.25;
-      else if (d2.data.end)
-        myScale = 0.5;
-      else if (d2.data.center)
-        myScale = 0.0;
-      d2.path = m2.scale(1.0,dist*myScale);
-       */
     }
+    //  Dancers often end up in unusual formations after
+    //  Fold or Cross Fold.  Don't try to fix.
+    ctx.noSnap();
   }
 
 }

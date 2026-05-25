@@ -53,37 +53,12 @@ class Fold extends Action {
       var dist = d.distanceTo(d2);
       var dxscale = 0.75;
       var dyscale = dist/2.0;
-      /*
-      var dyoffset = 1.0;
-      if (ctx.isTidal())
-        dyoffset = 1.5;
-      else if (d.data.end)
-        dyoffset = 2.0 - dist;
-      else if (d.data.center)
-        dyoffset = 2.0;
-      if (d2.isLeftOf(d))
-        dyoffset = -dyoffset;
-      d.path = m.scale(dxscale,1.0).skew(0.0,dyoffset);
-       */
       d.path = m.scale(dxscale, dyscale);
 
-      //  Also set path for partner
-      /*
-      var m2 = Stand;
-      if (d.isRightOf(d2))
-        m2 = DodgeRight;
-      else if (d.isLeftOf(d2))
-        m2 = DodgeLeft;
-      var myScale = 0.25;
-      if (ctx.isTidal())
-        myScale = 0.25;
-      else if (d2.data.end)
-        myScale = 0.5;
-      else if (d2.data.center)
-        myScale = 0.0;
-      d2.path = m2.scale(1.0,dist*myScale);
-       */
     }
+    //  Dancers often end up in unusual formations after
+    //  Fold or Cross Fold.  Don't try to fix.
+    ctx.noSnap();
   }
 
 }
