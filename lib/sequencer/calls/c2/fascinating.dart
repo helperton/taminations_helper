@@ -45,6 +45,7 @@ class Fascinating extends Action {
         ctx3.applyCalls('Concentric $what');
       });
     });
+    ctx.checkCenters(centersToCheck:vc+other2);
     if (ctx.isCollision()) {
       ctx.subContext(vc+other2, (ctx4) {
         ctx4.adjustToFormation(Formation('Compact Wave RH'));
