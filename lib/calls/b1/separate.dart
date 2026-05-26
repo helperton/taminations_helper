@@ -342,5 +342,27 @@ import '../../moves.dart';
           LeadLeft.changeBeats(2).scale(2.5,0.5) +
           LeadLeft.changeBeats(2).scale(1.0,1.5)
       ]),
+
+    AnimatedCall('Heads Come Into the Middle',
+      formation:Formation('Static Square'),
+      group:' ',
+      actives:'Heads',
+      paths:[
+          Forward.changeBeats(3).scale(2.0,1.0),
+          Forward.changeBeats(3).scale(2.0,1.0),
+          Stand.changeBeats(3),
+          Stand.changeBeats(3)
+      ]),
+
+    AnimatedCall('Sides Come Into the Middle',
+      formation:Formation('Static Square'),
+      group:' ',
+      actives:'Sides',
+      paths:[
+          Stand.changeBeats(3),
+          Stand.changeBeats(3),
+          Forward.changeBeats(3).scale(2.0,1.0),
+          Forward.changeBeats(3).scale(2.0,1.0)
+      ]),
   ];
 
