@@ -135,12 +135,18 @@ Future<void> main(List<String> args) async {
   //  One-shot mode for quick testing: pass the JSON request as the first arg.
   if (args.isNotEmpty) {
     stdout.writeln(jsonEncode(_handle(args.first)));
+    await stdout.flush();
     return;
   }
 
   //  Long-lived worker: one JSON request per stdin line → one JSON response line.
+  //  IMPORTANT: stdout is block-buffered when it's a pipe (not a TTY), so we must flush
+  //  after every response. Without this the worker never exits, the buffered reply never
+  //  reaches the reader, and the caller blocks forever. (One-shot runs happened to flush
+  //  on exit, which masked this — but the long-lived worker does not exit.)
   await for (final line in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
     if (line.trim().isEmpty) continue;
     stdout.writeln(jsonEncode(_handle(line)));
+    await stdout.flush();
   }
 }
