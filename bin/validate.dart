@@ -30,14 +30,39 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:taminations/formation.dart';
+import 'package:taminations/dancer.dart';
 import 'package:taminations/sequencer/call_context.dart';
 import 'package:taminations/sequencer/calls/coded_call.dart';
 import 'package:taminations/sequencer/calls/xml_call.dart';
 import 'package:taminations/sequencer/call_error.dart';
 import 'package:taminations/sequencer/words.dart';
 import 'package:taminations/extensions.dart';   // for `.ri` (regex)
+
+/// Serializes the dancers' positions + roles after the current call — the SAME shape the
+/// GUI's GET /state emits — so SquareCraft can run its existing inferFASRComponents
+/// (formation/arrangement/sequence/relationship) on a headless run. Call after ctx.analyze().
+List<Map<String, dynamic>> _serializeDancers(CallContext ctx) {
+  return [
+    for (final d in ctx.dancers)
+      {
+        'number': d.number,
+        'couple': d.numberCouple,
+        'gender': d.gender == Gender.BOY ? 'boy' : d.gender == Gender.GIRL ? 'girl' : 'phantom',
+        'x': (d.location.x * 1000).round() / 1000.0,
+        'y': (d.location.y * 1000).round() / 1000.0,
+        'angleDegrees': (d.angleFacing * 180 / pi * 10).round() / 10.0,
+        'beau': d.data.beau,
+        'belle': d.data.belle,
+        'leader': d.data.leader,
+        'trailer': d.data.trailer,
+        'center': d.data.center,
+        'end': d.data.end,
+      }
+  ];
+}
 
 final _skipAdjust = '(move in|step|gnat|back\\s*(up|away))'.ri;
 
@@ -109,6 +134,7 @@ Map<String, dynamic> _validate(String formation, List<String> calls) {
       'call': calls[i],
       'detectedFormation': detectedFormation,
       'beats': (callBeats * 10).round() / 10.0,
+      'dancers': _serializeDancers(ctx),
     });
   }
 
