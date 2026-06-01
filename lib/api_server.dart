@@ -29,7 +29,7 @@ import 'tam_state.dart';
 
 class TamHelperApiServer {
   static const port = 7234;
-  static const debugBuildMarker = 'dock-debug-9';
+  static const debugBuildMarker = 'validate-2';
 
   SequencerModel? _sequencerModel;
   TamState? _appState;
@@ -165,6 +165,10 @@ class TamHelperApiServer {
 
     if (request.method == 'POST' && path == 'sequence') {
       return await _handleSequence(request);
+    }
+
+    if (request.method == 'POST' && path == 'validate') {
+      return await _handleValidate(request);
     }
 
     if (request.method == 'GET' && path == 'state') {
@@ -359,6 +363,109 @@ class TamHelperApiServer {
 
     _lastResponseSummary = 'ok — loaded ${calls.length} call(s)';
     return _jsonOk({'ok': true, 'callCount': calls.length});
+  }
+
+  /// Batch validation: runs an entire call sequence in-process and returns each
+  /// call's detected formation + measured beats in ONE response, so callers don't
+  /// pay a /sequence + /state HTTP round-trip per call. Generic TH capability — no
+  /// caller-specific interpretation here (resolves-home, timing adoption, etc. are
+  /// the client's concern).
+  Future<Response> _handleValidate(Request request) async {
+    final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    } catch (_) {
+      return Response(400,
+          body: jsonEncode({'error': 'invalid JSON body'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+
+    final formation = (body['formation'] as String?) ?? 'Squared Set';
+    final rawCalls = body['calls'];
+    if (rawCalls == null || rawCalls is! List) {
+      return Response(400,
+          body: jsonEncode({'error': '"calls" must be a JSON array'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+    final calls = rawCalls.cast<String>();
+
+    _lastRequestTime = DateTime.now().toIso8601String();
+    _lastFormation = formation;
+    _lastCalls = List<String>.from(calls);
+    _lastError = null;
+    _lastResponseSummary = null;
+
+    _appState?.change(
+      mainPage: MainPage.SEQUENCER,
+      formation: formation,
+      calls: '',
+      sidecarMode: true,
+    );
+    final model = await _waitForSequencerModel();
+    if (model == null) {
+      _lastError = 'Sequencer model was not created after navigating to the Sequencer page.';
+      return _jsonOk({
+        'ok': false, 'failingIndex': null, 'failingCall': null,
+        'error': _lastError, 'perCall': <Map<String, dynamic>>[],
+      });
+    }
+
+    try {
+      model.setStartingFormation(formation);
+      model.reset();
+    } catch (e) {
+      _lastError = 'Formation error: $e';
+      return _jsonOk({
+        'ok': false, 'failingIndex': null, 'failingCall': null,
+        'error': _lastError, 'perCall': <Map<String, dynamic>>[],
+      });
+    }
+
+    final perCall = <Map<String, dynamic>>[];
+    for (var i = 0; i < calls.length; i++) {
+      try {
+        model.animation.doPause();
+        final ok = model.loadOneCall(calls[i]);
+        if (!ok) {
+          _lastError = model.errorString;
+          _lastResponseSummary = 'failed at call $i: ${calls[i]}';
+          return _jsonOk({
+            'ok': false, 'failingIndex': i, 'failingCall': calls[i],
+            'error': _lastError, 'perCall': perCall,
+          });
+        }
+      } catch (e) {
+        _lastError = '$e';
+        _lastResponseSummary = 'exception at call $i: ${calls[i]}';
+        return _jsonOk({
+          'ok': false, 'failingIndex': i, 'failingCall': calls[i],
+          'error': '$e', 'perCall': perCall,
+        });
+      }
+
+      // Snapshot detected formation + measured beats for this call (same detection as /state).
+      final ctx = model.contextFromAnimation();
+      ctx.analyze();
+      String? detectedFormation;
+      if (ctx.isSquare()) detectedFormation = 'Squared Set';
+      else if (ctx.isWaves()) detectedFormation = 'Waves';
+      else if (ctx.isTwoFacedLines()) detectedFormation = 'Two-Faced Lines';
+      else if (ctx.isLines()) detectedFormation = 'Lines';
+      else if (ctx.isColumns()) detectedFormation = 'Columns';
+      else if (ctx.isTidal()) detectedFormation = 'Tidal';
+      else if (ctx.isThar()) detectedFormation = 'Thar';
+      else if (ctx.isDiamond()) detectedFormation = 'Diamond';
+      else if (ctx.isTBone()) detectedFormation = 'T-Bone';
+      final beats = model.calls.isNotEmpty ? model.calls.last.beats : 0.0;
+      perCall.add({
+        'call': calls[i],
+        'detectedFormation': detectedFormation,
+        'beats': (beats * 10).round() / 10.0,
+      });
+    }
+
+    _lastResponseSummary = 'validated ${calls.length} call(s)';
+    return _jsonOk({'ok': true, 'callCount': calls.length, 'perCall': perCall});
   }
 
   Response _handleState() {
