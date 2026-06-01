@@ -67,6 +67,17 @@ DEBUG_MARKER="$(read_debug_marker)"
 echo "Building Debug macOS app..."
 flutter build macos --debug "$@"
 
+# Compile the headless validator (bin/validate.dill) used by SquareCraft at fill time.
+# It runs the same pure-Dart engine as the GUI but with no animation/rendering, so the
+# fill can validate figures fast and without bringing up the GUI window. `dart compile
+# exe` is blocked by package-level native-asset build hooks, so we ship a kernel snapshot
+# and run it with `dart bin/validate.dill` (clean stdout, no build-hook noise).
+echo "Compiling headless validator (bin/validate.dill)..."
+dart compile kernel bin/validate.dart -o bin/validate.dill
+VALIDATE_SMOKE="$(echo '{"calls":["ALLEMANDE LEFT","RIGHT AND LEFT GRAND","PROMENADE HOME"]}' | dart bin/validate.dill 2>/dev/null || true)"
+grep -Fq '"ok":true' <<<"$VALIDATE_SMOKE" || fail "Headless validator smoke test failed: $VALIDATE_SMOKE"
+echo "  headless validator: $ROOT_DIR/bin/validate.dill (smoke test ok)"
+
 require_file "$EXECUTABLE_PATH"
 require_file "$DEBUG_DYLIB_PATH"
 require_file "$KERNEL_BLOB_PATH"

@@ -31,6 +31,8 @@
 .pub-cache/
 .pub/
 /build/
+# Headless validator kernel snapshot — a build artifact (compiled by util/build_debug_verified.sh).
+/bin/*.dill
 /out/
 /gen/
 /coverage/
