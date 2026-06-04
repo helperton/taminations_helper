@@ -32,6 +32,7 @@ import '../common_flutter.dart';
 import '../dance_painter.dart';
 import '../pages/calls_page.dart';
 import '../pages/page.dart';
+import '../resolve_client.dart';
 import 'abbreviations_model.dart';
 import 'sequencer_model.dart';
 import 'words.dart';
@@ -392,6 +393,101 @@ class SequencerResetButton extends fm.StatelessWidget {
         child: Button('Reset',onPressed: () {
           model.reset();
         })
+    );
+  }
+}
+
+class SequencerResolveButton extends fm.StatefulWidget {
+  @override
+  fm.State<SequencerResolveButton> createState() => _SequencerResolveButtonState();
+}
+
+class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
+  bool _busy = false;
+
+  void _snack(fm.BuildContext context, String message) {
+    fm.ScaffoldMessenger.of(context).showSnackBar(fm.SnackBar(
+      backgroundColor: Color.BLUE,
+      duration: Duration(seconds: 3),
+      content: fm.Text(message, style: GoogleFonts.roboto(fontSize: 20)),
+    ));
+  }
+
+  String _errorMessage(ResolveError e) {
+    switch (e) {
+      case ResolveError.unreachable:
+        return 'SquareCraft not reachable.';
+      case ResolveError.unauthorized:
+        return 'SquareCraft auth failed.';
+      case ResolveError.timeout:
+        return 'Resolve timed out.';
+      case ResolveError.badResponse:
+        return 'Unexpected response from SquareCraft.';
+      case ResolveError.none:
+        return '';
+    }
+  }
+
+  Future<void> _resolve(fm.BuildContext context, SequencerModel model) async {
+    final calls = model.calls.map((c) => c.name).toList();
+    setState(() => _busy = true);
+    final result = await ResolveClient.resolve(calls);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    if (result.error != ResolveError.none) {
+      _snack(context, _errorMessage(result.error));
+      return;
+    }
+    if (!result.resolved) {
+      _snack(context, "Couldn't resolve from ${result.state} — ${result.note}");
+      return;
+    }
+
+    // Preview: load the get-out so the square animates toward home.
+    var loaded = 0;
+    for (final call in result.resolution) {
+      if (model.loadOneCall(call)) {
+        loaded++;
+      } else {
+        final err = model.errorString;
+        for (var i = 0; i < loaded; i++) {
+          model.undoLastCall();
+        }
+        _snack(context, "Get-out call '$call' didn't load: $err");
+        return;
+      }
+    }
+
+    // Confirm: keep the preview (Accept) or revert it (Dismiss).
+    final accepted = await fm.showDialog<bool>(
+      context: context,
+      builder: (ctx) => fm.AlertDialog(
+        title: fm.Text('Resolve to Home — ${result.state}'),
+        content: fm.Text(result.resolution.join('\n')),
+        actions: [
+          fm.TextButton(
+              onPressed: () => fm.Navigator.of(ctx).pop(false),
+              child: fm.Text('Dismiss')),
+          fm.TextButton(
+              onPressed: () => fm.Navigator.of(ctx).pop(true),
+              child: fm.Text('Accept')),
+        ],
+      ),
+    );
+    if (accepted != true) {
+      for (var i = 0; i < loaded; i++) {
+        model.undoLastCall();
+      }
+    }
+  }
+
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    final model = pp.Provider.of<SequencerModel>(context, listen: false);
+    return fm.Expanded(
+      child: Button('Resolve',
+          onPressed: _busy ? null : () => _resolve(context, model)),
     );
   }
 }

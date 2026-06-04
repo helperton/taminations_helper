@@ -69,6 +69,7 @@ class PortraitSequencerAnimationFrame extends fm.StatelessWidget {
                     return fm.Column(
                       children: [
                         SequencerUndoButton(),
+                        SequencerResolveButton(),
                         SequencerResetButton(),
                         SequencerCopyButton(),
                         SequencerPasteButton(),
