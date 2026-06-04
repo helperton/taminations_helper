@@ -99,6 +99,16 @@ Map<String, dynamic> _validate(String formation, List<String> calls) {
           (firstCall is XMLCall && !firstCall.found)) {
         cctx.matchStandardFormation();
       }
+      //  Mirror the GUI's loadOneCall validity gate (sequencer_model.dart): a call
+      //  that lands dancers on top of each other is not a valid animation. The
+      //  headless engine otherwise only fails on a thrown CallError, so without this
+      //  an illegal-but-pathable call (e.g. Allemande Left from two-faced lines)
+      //  passes as ok:true. TH is the authority on resolvability — report its
+      //  verdict faithfully so a get-out that only "works" by overlapping dancers
+      //  is rejected, not handed back as resolved.
+      if (cctx.isCollision()) {
+        throw CallError('Unable to calculate valid animation.');
+      }
       cctx.appendToSource();
     } on CallError catch (e) {
       return {
