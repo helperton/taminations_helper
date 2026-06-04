@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
 
 /// Categories for a resolve attempt that did not return a usable resolution.
@@ -42,6 +44,44 @@ class ResolveResult {
           state: state, resolved: false, note: decoded['note'] as String? ?? '');
     } catch (_) {
       return const ResolveResult(error: ResolveError.badResponse);
+    }
+  }
+}
+
+/// Client for SquareCraft's resolver debug API (localhost:7233, DEBUG builds only).
+class ResolveClient {
+  /// Bearer token, set at startup from the --sc-token launch arg (see main.dart).
+  static String? scAuthToken;
+
+  static const _host = 'localhost';
+  static const _port = 7233;
+
+  /// GET the call history to /resolve-hybrid and return the parsed result.
+  /// Never throws: connection/timeout failures map to a ResolveResult error.
+  static Future<ResolveResult> resolve(List<String> calls) async {
+    if (calls.isEmpty) {
+      return const ResolveResult(note: 'no calls to resolve');
+    }
+    final uri = Uri(
+      scheme: 'http',
+      host: _host,
+      port: _port,
+      path: '/patter/fasr/resolve-hybrid',
+      queryParameters: {'calls': calls.join(',')},
+    );
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+    try {
+      final req = await client.getUrl(uri);
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${scAuthToken ?? ''}');
+      final resp = await req.close().timeout(const Duration(seconds: 30));
+      final respBody = await resp.transform(utf8.decoder).join();
+      return ResolveResult.parse(resp.statusCode, respBody);
+    } on TimeoutException {
+      return const ResolveResult(error: ResolveError.timeout);
+    } on SocketException {
+      return const ResolveResult(error: ResolveError.unreachable);
+    } finally {
+      client.close();
     }
   }
 }
