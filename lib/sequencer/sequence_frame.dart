@@ -429,6 +429,10 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
   }
 
   Future<void> _resolve(fm.BuildContext context, SequencerModel model) async {
+    if (model.calls.isEmpty) {
+      _snack(context, 'Nothing to resolve.');
+      return;
+    }
     final calls = model.calls.map((c) => c.name).toList();
     setState(() => _busy = true);
     final result = await ResolveClient.resolve(calls);
@@ -445,15 +449,20 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
     }
 
     // Preview: load the get-out so the square animates toward home.
-    var loaded = 0;
+    // Revert by call-count delta (not a hand-kept counter) so a Dismiss
+    // restores EXACTLY the pre-preview sequence — a call that loads but
+    // adds nothing, or a compound call, can never desync the undo into the
+    // user's pre-existing calls.
+    final baseline = model.calls.length;
+    void revertPreview() {
+      while (model.calls.length > baseline) {
+        model.undoLastCall();
+      }
+    }
     for (final call in result.resolution) {
-      if (model.loadOneCall(call)) {
-        loaded++;
-      } else {
+      if (!model.loadOneCall(call)) {
         final err = model.errorString;
-        for (var i = 0; i < loaded; i++) {
-          model.undoLastCall();
-        }
+        revertPreview();
         _snack(context, "Get-out call '$call' didn't load: $err");
         return;
       }
@@ -476,9 +485,7 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
       ),
     );
     if (accepted != true) {
-      for (var i = 0; i < loaded; i++) {
-        model.undoLastCall();
-      }
+      revertPreview();
     }
   }
 
