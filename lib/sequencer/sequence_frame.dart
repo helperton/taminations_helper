@@ -444,7 +444,8 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
       return;
     }
     if (!result.resolved) {
-      _snack(context, "Couldn't resolve from ${result.state} — ${result.note}");
+      final detail = result.note.isEmpty ? '' : ' — ${result.note}';
+      _snack(context, "Couldn't resolve from ${result.state}$detail");
       return;
     }
 
@@ -484,6 +485,11 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
         ],
       ),
     );
+    // No mounted-guard here on purpose: revertPreview() only mutates the
+    // Provider-scoped model (never context/setState), so it must run even if
+    // the widget unmounted while the dialog was open — otherwise a dismissed
+    // preview would stay committed. Any FUTURE context/setState use added
+    // after the dialog MUST add its own `if (!mounted) return;` first.
     if (accepted != true) {
       revertPreview();
     }
