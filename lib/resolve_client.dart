@@ -27,20 +27,21 @@ class ResolveResult {
     if (statusCode != 200) {
       return const ResolveResult(error: ResolveError.badResponse);
     }
-    final Map<String, dynamic> map;
     try {
-      map = jsonDecode(body) as Map<String, dynamic>;
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) {
+        return const ResolveResult(error: ResolveError.badResponse);
+      }
+      final state = decoded['state'] as String? ?? '?';
+      if (decoded['resolved'] == true) {
+        final raw = decoded['resolution'];
+        final resolution = raw is List ? raw.cast<String>().toList() : <String>[];
+        return ResolveResult(state: state, resolved: true, resolution: resolution);
+      }
+      return ResolveResult(
+          state: state, resolved: false, note: decoded['note'] as String? ?? '');
     } catch (_) {
       return const ResolveResult(error: ResolveError.badResponse);
     }
-    final state = (map['state'] as String?) ?? '?';
-    if (map['resolved'] == true) {
-      final raw = map['resolution'];
-      return ResolveResult(
-          state: state,
-          resolved: true,
-          resolution: raw is List ? raw.cast<String>() : const []);
-    }
-    return ResolveResult(state: state, resolved: false, note: (map['note'] as String?) ?? '');
   }
 }

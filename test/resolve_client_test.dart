@@ -31,4 +31,20 @@ void main() {
   test('parse: malformed body maps to badResponse', () {
     expect(ResolveResult.parse(200, 'not json').error, ResolveError.badResponse);
   });
+
+  test('parse: valid JSON that is not an object maps to badResponse', () {
+    expect(ResolveResult.parse(200, '[1,2,3]').error, ResolveError.badResponse);
+  });
+
+  test('parse: wrong-typed scalar field maps to badResponse', () {
+    expect(ResolveResult.parse(200, '{"state":42,"resolved":false}').error,
+        ResolveError.badResponse);
+  });
+
+  test('parse: non-string element in resolution maps to badResponse', () {
+    expect(
+        ResolveResult.parse(
+            200, '{"state":"x","resolved":true,"resolution":["OK",42]}').error,
+        ResolveError.badResponse);
+  });
 }
