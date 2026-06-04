@@ -49,6 +49,10 @@ class SequencerModel extends fm.ChangeNotifier {
   String get startingFormation => _startingFormation;
   String partString = '';
   String errorString = '';
+  /// The most recent call passed to [loadOneCall] that threw (failed). Null after
+  /// a successful call. A failed call is never added to [calls], so without this
+  /// the API/state shows the error message but not which call triggered it.
+  String? lastFailedCall;
   DanceModel animation;
   int currentCall = -1;
   String helplink = '';
@@ -286,10 +290,12 @@ class SequencerModel extends fm.ChangeNotifier {
 
   bool loadOneCall(String call) {
     errorString = '';
+    lastFailedCall = null;
     try {
       _interpretOneLine(call);
     } on CallError catch(e) {
       errorString = e.toString();
+      lastFailedCall = call;
       notifyListeners();
       return false;
     }

@@ -519,6 +519,7 @@ class TamHelperApiServer {
         'startingFormation': model.startingFormation,
         'detectedFormation': detectedFormation,
         'warning': warning,
+        'lastFailedCall': model.lastFailedCall,
         'totalBeats': (totalBeats * 10).round() / 10.0,
         'lastCallBeats': (lastCallBeats * 10).round() / 10.0,
         'dancers': dancers,
