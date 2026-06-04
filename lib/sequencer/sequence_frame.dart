@@ -134,6 +134,7 @@ class SequenceEditButtons extends fm.StatelessWidget {
         child: fm.Row(
           children: [
             SequencerUndoButton(),
+            SequencerResolveButton(),
             SequencerResetButton(),
             SequencerCopyButton(),
             SequencerPasteButton(),
