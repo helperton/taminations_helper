@@ -57,7 +57,7 @@ class ResolveClient {
   static const _port = 7233;
 
   /// GET the call history to /resolve-hybrid and return the parsed result.
-  /// Never throws: connection/timeout failures map to a ResolveResult error.
+  /// Never throws: any connection, timeout, or transport failure maps to a ResolveResult error.
   static Future<ResolveResult> resolve(List<String> calls) async {
     if (calls.isEmpty) {
       return const ResolveResult(note: 'no calls to resolve');
@@ -80,8 +80,10 @@ class ResolveClient {
       return const ResolveResult(error: ResolveError.timeout);
     } on SocketException {
       return const ResolveResult(error: ResolveError.unreachable);
+    } catch (_) {
+      return const ResolveResult(error: ResolveError.badResponse);
     } finally {
-      client.close();
+      client.close(force: true);
     }
   }
 }
