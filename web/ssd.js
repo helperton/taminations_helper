@@ -49,6 +49,7 @@ flutterwheel : { title:'Flutterwheel', link:'ssd/flutterwheel', animation:'Flutt
 reverseflutterwheel : { title:'Reverse Flutterwheel', link:'ssd/flutterwheel', animation:'ReverseFlutterwheelfromFacingCouples' },
 sweepaquarter : { title:'Flutterwheel and Sweep a Quarter', link:'ssd/sweep_a_quarter', animation:'FlutterwheelandSweepaQuarter' },
 circletoaline : { title:'Circle to a Line', link:'ssd/circle_to_a_line', animation:'CircletoaLine' },
+separatearound1toaline : { title:'Heads Pass Thru, Separate, Around 1 to a Line', link:'ssd/separate', animation:'HeadsPassThruSeparateAround1toaLine' },
 separatearound2toaline : { title:'Heads Pass Thru, Separate, Around 2 to a Line', link:'ssd/separate', animation:'HeadsPassThruSeparateAround2toaLine' },
 separatearound1andcomeintothemiddle : { title:'Heads Pass Thru, Separate, Around 1 and Come Into the Middle', link:'ssd/separate', animation:'HeadsPassThruSeparateAround1andComeIntotheMiddle' },
 split2 : { title:'Split 2', link:'ssd/split_the_outside_couple', animation:'CentersSplittheOutsideCouple' },
@@ -63,6 +64,7 @@ righthandtrade : { title:'Trade', link:'ssd/trade', animation:'TradefromRightHan
 lefthandtrade : { title:'Trade', link:'ssd/trade', animation:'TradefromLeftHandWaves' },
 swingthru : { title:'Swing Thru', link:'ssd/swing_thru', animation:'SwingThrufromRightHandWaves' },
 run : { title:'Boys Run', link:'ssd/run', animation:'BoysRunfromRightHandWaves' },
+girlsrun : { title:'Girls Run', link:'ssd/run', animation:'GirlsRunfromRightHandWaves' },
 crossrun : { title:'Girls Cross Run', link:'ssd/run', animation:'CentersCrossRunfromRightHandWaves' },
 passtheocean : { title:'Pass the Ocean', link:'ssd/pass_the_ocean', animation:'PasstheOceanfromLines' },
 extend : { title:'Extend', link:'ssd/extend', animation:'ExtendfromRightHand14Tag' },
@@ -85,7 +87,265 @@ boxcirculate : { title:'Centers Box Circulate', link:'ssd/circulate', animation:
 fold : { title:'Ends Fold', link:'ssd/fold', animation:'EndsFoldfromLinesFacingOut' },
 crossfold : { title:'Ends Cross Fold', link:'ssd/fold', animation:'EndsCrossFoldfromLinesFacingOut' },
 scootback : { title:'Scoot Back', link:'ssd/scoot_back', animation:'ScootBackfromRightHandWaves' },
-recycle : { title:'Recycle', link:'ssd/recycle', animation:'RecyclefromRightHandWave' }
+recycle : { title:'Recycle', link:'ssd/recycle', animation:'RecyclefromRightHandWave' },
+spinthetop : { title:'Spin the Top', link:'ms/spin_the_top',
+  animation:'SpintheTopfromRightHandWave' },
+
+  aceydeucey : { title:'Acey Deucey',link:'plus/acey_deucey',
+    animation:'AceyDeuceyFromRightHandWaves'},
+  cloverleaf : {
+    title: 'Cloverleaf',
+    link:'ms/cloverleaf',
+    animation: 'CloverleaffromCompletedDoublePassThru'
+  },
+  pingpongcirculate : {
+    title:'Ping Pong Circulate',
+    link: 'plus/ping_pong_circulate',
+    animation: 'PingPongCirculateFrommQuarterTag'
+  },
+  turnthru : {
+    title:'Turn thru',
+    link:'ms/turn_thru',
+    animation: 'TurnThruFromFacingCouples'
+  },
+  passtothecenter : {
+    title:'Pass to the Center',
+    link:'ms/pass_to_the_center',
+    animation:'PasstotheCenterfromEightChainThru'
+  },
+  spinchainthru : {
+    title:'Spin Chain Thru',
+    link:'ms/spin_chain_thru',
+    animation:'SpinChainThrufromRightHandWaves'
+  },
+  scootanddodge : {
+    title:'Scoot and Dodge',
+    link:'a1/scoot_and_dodge',
+    animation:'ScootandDodgefromRightHandBox'
+  },
+  pairoff : {
+    title:'Heads Pair Off',
+    link:'a1/pair_off',
+    animation:'HeadsPairOff'
+  },
+  teacupchain : {
+    title:'Teacup Chain',
+    link:'plus/teacup_chain',
+    animation:'TeacupChainfromStaticSquare'
+  },
+  dixiestyle : {
+    title:'Dixie Style to a Wave',
+    link:'ms/dixie_style',
+    animation:'DixieStylefromFacingCouples'
+  },
+  walkaroundseesaw : {
+    title: 'Walk Around the Corner, See Saw Your Partner',
+    link:'b1/all_around_the_corner',
+    animation:'WalkAroundtheCornerSeeSawYourPartner'
+  },
+  loadtheboat : {
+    title:'Load the Boat',
+    link:'plus/load_the_boat',
+    animation:'LoadTheBoatfromFacingLines'
+  },
+  quarterthru : {
+    title:'Quarter Thru',
+    link:'a1/quarter_thru',
+    animation:'QuarterThrufromRightHandWaves'
+  },
+  triplescoot : {
+    title:'Triple Scoot',
+    link:'plus/triple_scoot',
+    animation:'TripleScootfromRightHandColumns'
+  },
+  track2 : {
+    title:'Track 2',
+    link:'plus/track_ii',
+    animation:'Track 2'
+  },
+  grandquarterthru : {
+    title:'Grand Quarter Thru',
+    link:'a1/grand_quarter_thru',
+    animation:'GrandQuarterThrufromRightHandColumns'
+  },
+  walkanddodge : {
+    title: 'Walk and Dodge',
+    link:'ms/walk_and_dodge',
+    animation:'WalkandDodgefromRightHandWaves'
+  },
+  spinchainthegears : {
+    title:'Spin Chain the Gears',
+    link:'plus/spin_chain_the_gears',
+    animation:'SpinChainTheGearsfromRightHandWaves'
+  },
+  grandswingthru : {
+    title:'Grand Swing Thru',
+    link:'plus/grand_swing_thru',
+    animation:'GrandSwingThrufromRightHandTidalWave'
+  },
+  threequarterthru : {
+    title:'Three Quarter Thru',
+    link:'a1/quarter_thru',
+    animation: '34ThrufromOceanWaves'
+  },
+  grandthreequarterthru : {
+    title:'Grand Three Quarter Thru',
+    link:'a1/grand_quarter_thru',
+    animation:'Grand34ThrufromRightHandColumns'
+  },
+  roll : {
+    title:'Hinge and Roll',
+    link:'plus/anything_and_roll',
+    animation:'HingeandRoll'
+  },
+  diamondcirculate : {
+    title:'Diamond Circulate',
+    link:'plus/diamond_circulate',
+    animation:'DiamondCirculatefromRightHandDiamonds'
+  },
+  passthesea : {
+    title:'Pass the Sea',
+    link:'a1/pass_the_sea',
+    animation:'PasstheSeafromLines'
+  },
+  flipthediamond : {
+    title:'Flip the Diamond',
+    link:'plus/flip_the_diamond',
+    animation:'FliptheDiamondfromRightHandDiamonds'
+  },
+  followyourneighbor : {
+    title:'Follow Your Neighbor',
+    link:'plus/follow_your_neighbor',
+    animation:'FollowYourNeighborfromRightHandWaves'
+  },
+  cutthediamond : {
+    title:'Cut the Diamond',
+    link:'plus/cut_the_diamond',
+    animation:'CuttheDiamondfromRightHandDiamonds'
+  },
+  allemandethar : {
+    title:'Allemande Left to an Allemande Thar',
+    link:'ms/thar',
+    animation:'AllemandeLefttoanAllemandeThar'
+  },
+  sliptheclutch : {
+    title:'Slip the Clutch',
+    link:'ms/slip_the_clutch',
+    animation:'SliptheClutchfromThar'
+  },
+  tripletrade : {
+    title:'Triple trade',
+    link:'a1/triple_trade',
+    animation:'TripleTradefromTidalWave'
+  },
+  shootthestar : {
+    title:'Shoot the Star',
+    link:'ms/shoot_the_star',
+    animation:'ShoottheStarfromThar'
+  },
+  peeloff : {
+    title:'Peel Off',
+    link:'plus/peel_off',
+    animation:'PeelOfffromCompletedDoublePassThru'
+  },
+  coordinate : {
+    title:'Coordinate',
+    link:'plus/coordinate',
+    animation:'CoordinateFromRightHandColumns'
+  },
+  spread : {
+    title:'Ferris Wheel and Spread',
+    link:'plus/anything_and_spread',
+    animation:'FerrisWheelandSpread'
+  },
+  fanthetop : {
+    title:'Fan the Top',
+    link:'plus/fan_the_top',
+    animation:'FantheTopfromRightHandWave'
+  },
+  relaythedeucey : {
+    title:'Relay the Deucey',
+    link:'plus/relay_the_deucey',
+    animation:'RelayTheDeucefromRightHandWaves'
+  },
+  partnertag : {
+    title:'Partner Tag',
+    link:'a1/partner_tag',
+    animation:'PartnerTagfromFacingCouples'
+  },
+  dixiegrand : {
+    title:'Dixie Grand',
+    link:'plus/dixie_grand',
+    animation:'DixieGrandfromDoublePassThru'
+  },
+  explodethewave : {
+    title:'Explode the Wave',
+    link:'plus/explode_the_wave',
+    animation:'ExplodetheWavefromRightHandWaves'
+  },
+  crossfire : {
+    title: 'Crossfire',
+    link:'plus/crossfire',
+    animation:'CrossfireFromRightHandTwoFacedLine'
+  },
+  explode : {
+    title:'Explode and Slide Thru',
+    link:'plus/explode_and_anything',
+    animation:'ExplodeandSlideThru',
+  },
+  partnerhinge : {
+    title:'Partner Hinge',
+    link:'a1/partner_hinge',
+    animation:'PartnerHingefromLines'
+  },
+  spinchainandexchangethegears : {
+    title:'Spin Chain and Exchange the Gears',
+    link:'plus/spin_chain_and_exchange_the_gears',
+    animation:'SpinChainandExchangetheGearsfromRightHandWaves',
+  },
+  linearcycle : {
+    title:'Linear Cycle',
+    link:'plus/linear_cycle',
+    animation:'LinearCyclefromRightHandWaves'
+  },
+  peelthetop : {
+    title:'Peel the Top',
+    link:'plus/peel_the_top',
+    animation:'PeeltheTopfromRightHandColumns'
+  },
+  chaseright : {
+    title:'Chase Right',
+    link:'plus/chase_right',
+    animation:'ChaseRightfromLinesFacingOut'
+  },
+  cloverand : {
+    title:'Clover and Square Thru 2',
+    link:'a1/clover_and_anything',
+    animation:'CloverandSquareThru2'
+  },
+  tradethewave : {
+    title:'Trade the Wave',
+    link:'plus/trade_the_wave',
+    animation:'TradetheWavefromRightHandWaves'
+  },
+  eightchainthru : {
+    title:'Eight Chain 4',
+    link:'ms/eight_chain_thru',
+    animation:'EightChainFourfromEightChainThru'
+  },
+  all8spinthetop : {
+    title:'All 8 Spin the Top',
+    link:'plus/all_8_spin_the_top',
+    animation:'All8SpintheTopfromWrongWayThar'
+  },
+  dopaso : {
+    title:'Do Paso',
+    link:'b1/do_paso',
+    animation:'DoPaso'
+  }
+
+
+
 
 };
 
@@ -96,17 +356,20 @@ const resizeOps = () => {
 };
 
 //  Called on startup and when a link in the index is tapped
-function setAnimation(title,link,name) {
+function setAnimation(call) {
   //  Set the title, above the animation
-  document.getElementById('animation-title').innerHTML = title;
+  document.getElementById('animation-title').innerHTML = call.title;
   //  Load Taminations and tell it to show our animation
   document.getElementById('animation').src =
-      'https://www.tamtwirlers.org/taminations/#?main=ANIMATIONS&link=' + link + '&animname=' + name + '&embed';
+      'https://www.tamtwirlers.org/taminations/#?main=ANIMATIONS&link='
+      + call.link + '&animname=' + call.animation + '&embed';
   //  Load the definition
   var lang = '';
   if (navigator.language.indexOf('de') >= 0)
     lang = '.lang-de';
-  document.getElementById('definition').src = 'https://www.tamtwirlers.org/taminations/html/'+link+lang+'.html';
+  document.getElementById('definition').src =
+      'https://www.tamtwirlers.org/taminations/#?main=ANIMATIONS&link=' +
+      call.link + '&embed&definition';
   //  On small screens, show the animation frame
   showAnimation();
 }
@@ -139,10 +402,10 @@ function startup() {
   let q = location.search.substring(1).toLowerCase();
   if (q.length > 0) {
     //  Lookup the call
-    var call = calls[q];
+    let call = calls[q];
     if (call != undefined)
       //  And show that animation
-      setAnimation(call.title,call.link,call.animation);
+      setAnimation(call);
   }
 
 }

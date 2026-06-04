@@ -23,18 +23,16 @@ Call pronunciations provided by
 
 ---
 
-## Taminations version 1.6.107 built 2026-05-12
+## Taminations version 1.6.108 built 2026-06-03
 Copyright 2026 by Brad Christie.  
 This is free software, and you are welcome to modify and redistribute it
 under the terms of the [GNU GPL license](http://www.gnu.org/licenses/gpl.html).  
 
 ## What's New
-* Space lines a little closer for some animations
-* Make sure Loop setting does not apply to sequencer or practice
-* Improved final formations for Shoot the Star
+* Better animations for Grand Chain Eight
 * Sequencer:
-  * Fix for some cases of Diamond Circulate
-  * Squeeze from columns now works
+  * Don't try to repair unusual formations after Fold/Cross Fold
+  * Fix some uses of Fascinating
 
 For a detailed history of changes, view the
 [Git log](https://github.com/bradchristie/taminations-flutter/commits/main)

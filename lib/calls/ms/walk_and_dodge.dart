@@ -25,8 +25,8 @@ import '../../moves.dart';
   final List<AnimatedCall> WalkAndDodge = [
 
     AnimatedCall('Walk and Dodge',
-      formation:Formation('Box RH'),
-      from:'Right-Hand Box Compact',difficulty: 1,notForSequencer: true,
+      formation:Formation('Box RH Compact'),
+      from:'Right-Hand Box',difficulty: 1,notForSequencer: true,
       paths:[
           Forward_3.changeBeats(4),
 
