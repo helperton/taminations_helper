@@ -42,6 +42,7 @@ import 'pages/second_landscape_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/start_practice_page.dart';
 import 'pages/tutorial_page.dart';
+import 'resolve_client.dart';
 import 'sequencer/abbreviations_frame.dart';
 import 'sequencer/abbreviations_model.dart';
 import 'sequencer/sequencer_calls_page.dart';
@@ -139,7 +140,9 @@ void main(List<String> args) async {
   final tokenArg = args.firstWhere(
       (arg) => arg.startsWith('--sc-token='), orElse: () => '');
   if (tokenArg.isNotEmpty) {
-    tamHelperApiServer.setExpectedToken(tokenArg.split('=').last);
+    final token = tokenArg.split('=').last;
+    tamHelperApiServer.setExpectedToken(token);
+    ResolveClient.scAuthToken = token;
   }
 
   fm.runApp(TaminationsApp(initialDockRequest: SidecarDockRequest.fromLaunchArgs(args)));
