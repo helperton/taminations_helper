@@ -89,7 +89,8 @@ class SequencerSettingsFrame extends fm.StatelessWidget {
                 DancerShapesWidget(),
                 DancerIdentificationWidget(),
                 GeometrySettingWidget(),
-                JoinCallsWithWidget()
+                JoinCallsWithWidget(),
+                DanceabilityControlsWidget()
               ]));
         });
   }
@@ -670,5 +671,68 @@ class JoinCallsWithWidget extends fm.StatelessWidget {
                 }),
           ]),
     );
+  }
+}
+
+class _SettingSlider extends fm.StatelessWidget {
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final bool enabled;
+  final void Function(double) onChanged;
+  _SettingSlider({required this.label, required this.value, required this.min,
+      required this.max, required this.divisions, required this.enabled, required this.onChanged});
+
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    final color = enabled ? fm.Colors.black : fm.Colors.grey;
+    return fm.Container(
+      color: fm.Colors.white,
+      padding: fm.EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: fm.Row(children: [
+        fm.SizedBox(width: 200, child: fm.Text(label, style: fm.TextStyle(color: color))),
+        fm.Expanded(child: fm.Slider(
+          value: value, min: min, max: max, divisions: divisions,
+          label: value.toStringAsFixed(1),
+          onChanged: enabled ? onChanged : null)),
+        fm.SizedBox(width: 44, child: fm.Text(value.toStringAsFixed(1),
+          textAlign: fm.TextAlign.right, style: fm.TextStyle(color: color))),
+      ]),
+    );
+  }
+}
+
+class DanceabilityControlsWidget extends fm.StatelessWidget {
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return pp.Consumer<Settings>(
+      builder: (context, settings, child) {
+        final on = Settings.danceabilityOverride;
+        return fm.Column(crossAxisAlignment: fm.CrossAxisAlignment.start, children: [
+          _SettingTitle('Resolver — Danceability'),
+          _SettingCheckbox(
+            name: 'Override SquareCraft danceability',
+            value: on,
+            onChanged: (v) { Settings.danceabilityOverride = v; },
+          ),
+          _SettingSlider(label: 'Lane-clearance weight', value: Settings.danceabilityLaneWeight,
+            min: 0, max: 100, divisions: 20, enabled: on,
+            onChanged: (v) { Settings.danceabilityLaneWeight = v; }),
+          _SettingSlider(label: 'Overlap weight (reserved)', value: Settings.danceabilityOverlapWeight,
+            min: 0, max: 100, divisions: 20, enabled: on,
+            onChanged: (v) { Settings.danceabilityOverlapWeight = v; }),
+          _SettingSlider(label: 'Corner-distance weight', value: Settings.danceabilityDistWeight,
+            min: 0, max: 100, divisions: 20, enabled: on,
+            onChanged: (v) { Settings.danceabilityDistWeight = v; }),
+          _SettingSlider(label: 'Offer threshold', value: Settings.danceabilityThreshold,
+            min: 0, max: 100, divisions: 20, enabled: on,
+            onChanged: (v) { Settings.danceabilityThreshold = v; }),
+          _SettingSlider(label: 'Block width', value: Settings.danceabilityBlockWidth,
+            min: 0.5, max: 2.0, divisions: 15, enabled: on,
+            onChanged: (v) { Settings.danceabilityBlockWidth = v; }),
+        ]);
+      });
   }
 }
