@@ -435,11 +435,9 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
       return;
     }
     final calls = model.calls.map((c) => c.name).toList();
-    // When the user has turned on the danceability override (sequencer Settings),
-    // send TH's tuning as per-call query params; otherwise send none and SC uses
-    // its own stored defaults.
+    // Send TH's danceability tuning (set in the Resolve dialog) as per-call
+    // /resolve-hybrid query overrides.
     final overrides = danceabilityOverrides(
-      enabled: Settings.danceabilityOverride,
       lane: Settings.danceabilityLaneWeight,
       overlap: Settings.danceabilityOverlapWeight,
       dist: Settings.danceabilityDistWeight,

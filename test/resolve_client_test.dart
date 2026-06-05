@@ -64,14 +64,8 @@ void main() {
     expect(u.queryParameters['threshold'], '55');
   });
 
-  test('danceabilityOverrides: empty when disabled', () {
-    final m = danceabilityOverrides(enabled: false, lane: 70, overlap: 25, dist: 5,
-        threshold: 60, blockWidth: 1.0);
-    expect(m, isEmpty);
-  });
-
-  test('danceabilityOverrides: five params when enabled (whole numbers un-suffixed)', () {
-    final m = danceabilityOverrides(enabled: true, lane: 70, overlap: 25, dist: 5,
+  test('danceabilityOverrides: returns the five params (whole numbers un-suffixed)', () {
+    final m = danceabilityOverrides(lane: 70, overlap: 25, dist: 5,
         threshold: 55, blockWidth: 1.5);
     expect(m, {'lane': '70', 'overlap': '25', 'dist': '5', 'threshold': '55', 'blockWidth': '1.5'});
   });

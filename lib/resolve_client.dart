@@ -92,19 +92,18 @@ class ResolveClient {
   }
 }
 
-/// Builds the per-call danceability override query params from TH's settings values, or an empty
-/// map when the override toggle is off (→ SquareCraft uses its own stored settings). Pure: the
-/// values are passed in (the caller reads Settings), so it is unit-testable. Whole numbers are
-/// emitted without a trailing ".0" for clean URLs; SC parses either form.
+/// Builds the per-call danceability override query params from the values the user chose in the
+/// Resolve dialog. Pure: the values are passed in (the caller reads Settings), so it is
+/// unit-testable. Whole numbers are emitted without a trailing ".0" for clean URLs; SC parses
+/// either form. The Resolve dialog always sends these (no opt-in toggle), so there is no
+/// "disabled" case.
 Map<String, String> danceabilityOverrides({
-  required bool enabled,
   required double lane,
   required double overlap,
   required double dist,
   required double threshold,
   required double blockWidth,
 }) {
-  if (!enabled) return const {};
   String n(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
   return {
     'lane': n(lane),
