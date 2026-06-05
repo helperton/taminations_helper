@@ -27,6 +27,8 @@ import '../common_flutter.dart';
 import '../pages/animation_page.dart';
 import '../pages/page.dart';
 import 'abbreviations_model.dart';
+import 'resolve_panel.dart';
+import 'resolver_panel_controller.dart';
 import 'sequence_frame.dart';
 import 'sequencer_animation_frame.dart';
 import 'sequencer_model.dart';
@@ -109,7 +111,9 @@ class _SequencerPageState extends fm.State<SequencerPage> {
       child: Page(
         showsTitleBar: false,
         respectsTopSafeArea: false,
-        child: pp.Consumer2<TitleModel,Settings>(
+        child: fm.Column(children: [
+          fm.Expanded(
+            child: pp.Consumer2<TitleModel,Settings>(
             builder: (context,titleModel,settings,_) {
               //  Setting the formation here if also set above
               //  can clobber calls passed in by the URL
@@ -148,7 +152,23 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               }
               return _desktopLandscapeContent();
             }
-        ),
+            )),
+            pp.Consumer<ResolverPanelController>(
+              builder: (ctx, c, _) => c.isOpen
+                  ? fm.SizedBox(
+                      height: 360, // matches resolverPaneHeight in main.dart
+                      child: ResolvePanel(
+                        onGo: () => SequencerResolveActions.go(ctx),
+                        onForward: () => SequencerResolveActions.forward(ctx),
+                        onBack: () => SequencerResolveActions.back(ctx),
+                        onAccept: () => SequencerResolveActions.accept(ctx),
+                        onDismiss: () => SequencerResolveActions.dismiss(ctx),
+                        onCancel: () => SequencerResolveActions.cancel(ctx),
+                      ),
+                    )
+                  : const fm.SizedBox.shrink(),
+            ),
+          ]),
       ),
     );
   }

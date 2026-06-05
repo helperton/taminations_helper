@@ -34,7 +34,7 @@ import '../pages/calls_page.dart';
 import '../pages/page.dart';
 import '../resolve_client.dart';
 import 'abbreviations_model.dart';
-import 'danceability_resolve_dialog.dart';
+import 'resolver_panel_controller.dart';
 import 'sequencer_model.dart';
 import 'words.dart';
 
@@ -405,56 +405,31 @@ class SequencerResolveButton extends fm.StatefulWidget {
 }
 
 class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
-  bool _busy = false;
-
-  void _snack(fm.BuildContext context, String message) {
-    fm.ScaffoldMessenger.of(context).showSnackBar(fm.SnackBar(
-      backgroundColor: Color.BLUE,
-      duration: Duration(seconds: 3),
-      content: fm.Text(message, style: GoogleFonts.roboto(fontSize: 20)),
-    ));
-  }
-
-  String _errorMessage(ResolveError e) {
-    switch (e) {
-      case ResolveError.unreachable:
-        return 'SquareCraft not reachable.';
-      case ResolveError.unauthorized:
-        return 'SquareCraft auth failed.';
-      case ResolveError.timeout:
-        return 'Resolve timed out.';
-      case ResolveError.badResponse:
-        return 'Unexpected response from SquareCraft.';
-      case ResolveError.none:
-        return '';
-    }
-  }
-
-  // Resolve flow entry point: open the danceability pre-flight dialog; only if
-  // the user hits Go (which saved their values to Settings) do we resolve.
-  Future<void> _onResolvePressed(
-      fm.BuildContext context, SequencerModel model) async {
-    if (model.calls.isEmpty) {
-      _snack(context, 'Nothing to resolve.');
-      return;
-    }
-    final go = await fm.showDialog<bool>(
-      context: context,
-      builder: (_) => DanceabilityResolveDialog(),
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return fm.Expanded(
+      child: Button('Resolve', onPressed: () {
+        pp.Provider.of<ResolverPanelController>(context, listen: false).open();
+      }),
     );
-    if (go != true) return;
-    if (!mounted) return;
-    await _resolve(context, model);
   }
+}
 
-  Future<void> _resolve(fm.BuildContext context, SequencerModel model) async {
+/// Actions invoked by the resolve pushout panel's buttons. Static so the panel
+/// (rendered elsewhere in the tree, in sequencer_page) can drive the resolve
+/// flow against the providers.
+extension SequencerResolveActions on SequencerResolveButton {
+  static Future<void> go(fm.BuildContext context) async {
+    final model = pp.Provider.of<SequencerModel>(context, listen: false);
+    final controller =
+        pp.Provider.of<ResolverPanelController>(context, listen: false);
     if (model.calls.isEmpty) {
-      _snack(context, 'Nothing to resolve.');
+      controller.applyResult(
+          const ResolveResult(resolved: false, note: 'Nothing to resolve.'),
+          baselineCount: 0);
       return;
     }
-    final calls = model.calls.map((c) => c.name).toList();
-    // Send TH's danceability tuning (set in the Resolve dialog) as per-call
-    // /resolve-hybrid query overrides.
+    controller.beginResolving();
     final overrides = danceabilityOverrides(
       lane: Settings.danceabilityLaneWeight,
       overlap: Settings.danceabilityOverlapWeight,
@@ -462,74 +437,48 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
       threshold: Settings.danceabilityThreshold,
       blockWidth: Settings.danceabilityBlockWidth,
     );
-    setState(() => _busy = true);
+    final calls = model.calls.map((c) => c.name).toList();
+    // model + controller were read before the await, so no post-await context use.
     final result = await ResolveClient.resolve(calls, overrides: overrides);
-    if (!mounted) return;
-    setState(() => _busy = false);
+    controller.applyResult(result, baselineCount: model.calls.length);
+  }
 
-    if (result.error != ResolveError.none) {
-      _snack(context, _errorMessage(result.error));
-      return;
-    }
-    if (!result.resolved) {
-      final detail = result.note.isEmpty ? '' : ' — ${result.note}';
-      _snack(context, "Couldn't resolve from ${result.state}$detail");
-      return;
-    }
-
-    // Preview: load the get-out so the square animates toward home.
-    // Revert by call-count delta (not a hand-kept counter) so a Dismiss
-    // restores EXACTLY the pre-preview sequence — a call that loads but
-    // adds nothing, or a compound call, can never desync the undo into the
-    // user's pre-existing calls.
-    final baseline = model.calls.length;
-    void revertPreview() {
-      while (model.calls.length > baseline) {
-        model.undoLastCall();
-      }
-    }
-    for (final call in result.resolution) {
-      if (!model.loadOneCall(call)) {
-        final err = model.errorString;
-        revertPreview();
-        _snack(context, "Get-out call '$call' didn't load: $err");
-        return;
-      }
-    }
-
-    // Confirm: keep the preview (Accept) or revert it (Dismiss).
-    final accepted = await fm.showDialog<bool>(
-      context: context,
-      builder: (ctx) => fm.AlertDialog(
-        title: fm.Text('Resolve to Home — ${result.state}'),
-        content: fm.Text(result.resolution.join('\n')),
-        actions: [
-          fm.TextButton(
-              onPressed: () => fm.Navigator.of(ctx).pop(false),
-              child: fm.Text('Dismiss')),
-          fm.TextButton(
-              onPressed: () => fm.Navigator.of(ctx).pop(true),
-              child: fm.Text('Accept')),
-        ],
-      ),
-    );
-    // No mounted-guard here on purpose: revertPreview() only mutates the
-    // Provider-scoped model (never context/setState), so it must run even if
-    // the widget unmounted while the dialog was open — otherwise a dismissed
-    // preview would stay committed. Any FUTURE context/setState use added
-    // after the dialog MUST add its own `if (!mounted) return;` first.
-    if (accepted != true) {
-      revertPreview();
+  static void forward(fm.BuildContext context) {
+    final model = pp.Provider.of<SequencerModel>(context, listen: false);
+    final controller =
+        pp.Provider.of<ResolverPanelController>(context, listen: false);
+    final call = controller.nextCall();
+    if (call == null) return;
+    if (model.loadOneCall(call)) {
+      controller.didLoadForward();
     }
   }
 
-  @override
-  fm.Widget build(fm.BuildContext context) {
+  static void back(fm.BuildContext context) {
     final model = pp.Provider.of<SequencerModel>(context, listen: false);
-    return fm.Expanded(
-      child: Button('Resolve',
-          onPressed: _busy ? null : () => _onResolvePressed(context, model)),
-    );
+    final controller =
+        pp.Provider.of<ResolverPanelController>(context, listen: false);
+    if (!controller.canBack()) return;
+    model.undoLastCall();
+    controller.didUndoBack();
+  }
+
+  static void accept(fm.BuildContext context) {
+    pp.Provider.of<ResolverPanelController>(context, listen: false).close();
+  }
+
+  static void dismiss(fm.BuildContext context) {
+    final model = pp.Provider.of<SequencerModel>(context, listen: false);
+    final controller =
+        pp.Provider.of<ResolverPanelController>(context, listen: false);
+    while (model.calls.length > controller.baseline) {
+      model.undoLastCall();
+    }
+    controller.close();
+  }
+
+  static void cancel(fm.BuildContext context) {
+    pp.Provider.of<ResolverPanelController>(context, listen: false).close();
   }
 }
 
