@@ -47,4 +47,32 @@ void main() {
             200, '{"state":"x","resolved":true,"resolution":["OK",42]}').error,
         ResolveError.badResponse);
   });
+
+  test('buildResolveUri: calls only when no overrides', () {
+    final u = ResolveClient.buildResolveUri(['Heads Lead Right', 'Veer Left'], const {});
+    expect(u.path, '/patter/fasr/resolve-hybrid');
+    expect(u.queryParameters['calls'], 'Heads Lead Right,Veer Left');
+    expect(u.queryParameters.containsKey('lane'), isFalse);
+    expect(u.queryParameters.containsKey('threshold'), isFalse);
+  });
+
+  test('buildResolveUri: overrides appended to the query', () {
+    final u = ResolveClient.buildResolveUri(['Heads Square Thru 4'],
+        const {'lane': '70', 'threshold': '55'});
+    expect(u.queryParameters['calls'], 'Heads Square Thru 4');
+    expect(u.queryParameters['lane'], '70');
+    expect(u.queryParameters['threshold'], '55');
+  });
+
+  test('danceabilityOverrides: empty when disabled', () {
+    final m = danceabilityOverrides(enabled: false, lane: 70, overlap: 25, dist: 5,
+        threshold: 60, blockWidth: 1.0);
+    expect(m, isEmpty);
+  });
+
+  test('danceabilityOverrides: five params when enabled (whole numbers un-suffixed)', () {
+    final m = danceabilityOverrides(enabled: true, lane: 70, overlap: 25, dist: 5,
+        threshold: 55, blockWidth: 1.5);
+    expect(m, {'lane': '70', 'overlap': '25', 'dist': '5', 'threshold': '55', 'blockWidth': '1.5'});
+  });
 }

@@ -58,17 +58,21 @@ class ResolveClient {
 
   /// GET the call history to /resolve-hybrid and return the parsed result.
   /// Never throws: any connection, timeout, or transport failure maps to a ResolveResult error.
-  static Future<ResolveResult> resolve(List<String> calls) async {
+  /// Builds the /resolve-hybrid request URL: the comma-joined calls plus any per-call overrides
+  /// (danceability weights/threshold). Pure — no I/O — so it is unit-testable.
+  static Uri buildResolveUri(List<String> calls, Map<String, String> overrides) {
+    final params = <String, String>{'calls': calls.join(',')};
+    params.addAll(overrides);
+    return Uri(scheme: 'http', host: _host, port: _port,
+        path: '/patter/fasr/resolve-hybrid', queryParameters: params);
+  }
+
+  static Future<ResolveResult> resolve(List<String> calls,
+      {Map<String, String> overrides = const {}}) async {
     if (calls.isEmpty) {
       return const ResolveResult(note: 'no calls to resolve');
     }
-    final uri = Uri(
-      scheme: 'http',
-      host: _host,
-      port: _port,
-      path: '/patter/fasr/resolve-hybrid',
-      queryParameters: {'calls': calls.join(',')},
-    );
+    final uri = buildResolveUri(calls, overrides);
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
       final req = await client.getUrl(uri);
@@ -86,4 +90,27 @@ class ResolveClient {
       client.close(force: true);
     }
   }
+}
+
+/// Builds the per-call danceability override query params from TH's settings values, or an empty
+/// map when the override toggle is off (→ SquareCraft uses its own stored settings). Pure: the
+/// values are passed in (the caller reads Settings), so it is unit-testable. Whole numbers are
+/// emitted without a trailing ".0" for clean URLs; SC parses either form.
+Map<String, String> danceabilityOverrides({
+  required bool enabled,
+  required double lane,
+  required double overlap,
+  required double dist,
+  required double threshold,
+  required double blockWidth,
+}) {
+  if (!enabled) return const {};
+  String n(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+  return {
+    'lane': n(lane),
+    'overlap': n(overlap),
+    'dist': n(dist),
+    'threshold': n(threshold),
+    'blockWidth': n(blockWidth),
+  };
 }
