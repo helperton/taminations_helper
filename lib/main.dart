@@ -167,6 +167,9 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
   static const sidecarWidthRatio = 0.16;
   static const sidecarHeightRatio = 0.94;
   static const sidecarDarkBackground = fm.Color(0xFF000000);
+  static const resolverPaneHeight = 360.0; // extra height for the resolve pushout panel
+  SidecarDockRequest? _lastDockRequest;
+  bool _resolverOpen = false;
   late final TaminationsRouterDelegate _routerDelegate;
   final TaminationsRouteInformationParser _routeInformationParser =
       TaminationsRouteInformationParser();
@@ -239,7 +242,11 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                         return model;
                       }),
                       pp.ChangeNotifierProvider(create: (_) => HighlightState()),
-                      pp.ChangeNotifierProvider(create: (_) => ResolverPanelController()),
+                      pp.ChangeNotifierProvider(create: (_) {
+                        final c = ResolverPanelController();
+                        c.onOpenChanged = (open) => setResolverOpen(open);
+                        return c;
+                      }),
                       pp.Provider(create: (_) => VirtualKeyboardVisible())
                     ],
                     child: fm.ValueListenableBuilder<bool>(
@@ -336,6 +343,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     if (!TamUtils.isWindowDevice) {
       return;
     }
+    _lastDockRequest = request;
+    final extra = _resolverOpen ? resolverPaneHeight : 0.0;
     _darkMode.value = request.darkMode;
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
@@ -343,7 +352,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     if (request.dockFrame != null) {
       final dockFrame = request.dockFrame!;
       final targetWidth = min(dockFrame.width, request.screenFrame.width);
-      final targetHeight = min(dockFrame.height, request.screenFrame.height);
+      final targetHeight = min(dockFrame.height + extra, request.screenFrame.height);
       final targetLeft = max(
         request.screenFrame.left,
         min(dockFrame.left, request.screenFrame.right - targetWidth),
@@ -370,7 +379,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       request.screenFrame.width,
     );
     final targetHeight = min(
-      request.hostFrame.height * sidecarHeightRatio,
+      request.hostFrame.height * sidecarHeightRatio + extra,
       request.screenFrame.height,
     );
     final targetLeft = min(
@@ -389,6 +398,15 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     ));
     await windowManager.show();
     await windowManager.focus();
+  }
+
+  /// Grow (true) or shrink (false) the sidecar to make room for the resolve
+  /// pushout panel, by re-applying the last dock request with the extra height.
+  Future<void> setResolverOpen(bool open) async {
+    if (_resolverOpen == open) return;
+    _resolverOpen = open;
+    final req = _lastDockRequest;
+    if (req != null) await _dockWindow(req);
   }
 }
 
