@@ -10,7 +10,6 @@ void main() {
   // macOS build (which is exactly what happened the first time around).
   test('GUI Settings exposes danceability accessors with SC defaults', () {
     Settings.mockInit();
-    expect(Settings.danceabilityOverride, isFalse);
     expect(Settings.danceabilityLaneWeight, 70);
     expect(Settings.danceabilityOverlapWeight, 25);
     expect(Settings.danceabilityDistWeight, 5);

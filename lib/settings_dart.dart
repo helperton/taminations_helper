@@ -231,15 +231,9 @@ class Settings {
     //  no need to notify listeners
   }
 
-  // Danceability resolver tuning (TH-local; sent as per-call overrides to SC when the toggle is on).
+  // Danceability resolver tuning (TH-local; sent as per-call overrides to SC on every resolve,
+  // seeded into and edited from the Resolve dialog).
   // Doubles are stored as Strings because the settings proxy exposes only bool/String.
-  static bool get danceabilityOverride =>
-      _instance.proxy.getBool('Danceability Override') ?? false;
-  static set danceabilityOverride(bool value) {
-    _instance.proxy.setBool('Danceability Override', value);
-    _instance.notifyListeners();
-  }
-
   static double _danceDouble(String key, double fallback) =>
       double.tryParse(_instance.proxy.getString(key) ?? '') ?? fallback;
 
