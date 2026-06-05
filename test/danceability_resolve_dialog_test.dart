@@ -54,4 +54,15 @@ void main() {
     expect(result, isFalse);
     expect(Settings.danceabilityThreshold, 40); // unchanged
   });
+
+  testWidgets('lays out without overflow on a narrow window', (tester) async {
+    Settings.mockInit();
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(_harness((_) {}));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Go'), findsOneWidget);
+    expect(tester.takeException(), isNull); // no RenderFlex overflow
+  });
 }

@@ -50,41 +50,55 @@ class _DanceabilityResolveDialogState extends fm.State<DanceabilityResolveDialog
     fm.Navigator.of(context).pop(true);
   }
 
-  fm.Widget _row(String label, double value, double min, double max,
+  // Label + value on one line, full-width slider below. No side-by-side fixed
+  // widths competing for the row, so it cannot horizontally overflow whatever
+  // width the dialog gives it.
+  fm.Widget _control(String label, double value, double min, double max,
       int divisions, void Function(double) onChanged) {
-    return fm.Padding(
-      padding: const fm.EdgeInsets.symmetric(vertical: 2),
-      child: fm.Row(children: [
-        fm.SizedBox(width: 150, child: fm.Text(label)),
-        fm.Expanded(
-            child: fm.Slider(
-                value: value,
-                min: min,
-                max: max,
-                divisions: divisions,
-                label: value.toStringAsFixed(1),
-                onChanged: (v) => setState(() => onChanged(v)))),
-        fm.SizedBox(
-            width: 44,
-            child: fm.Text(value.toStringAsFixed(1),
-                textAlign: fm.TextAlign.right)),
-      ]),
+    return fm.Column(
+      crossAxisAlignment: fm.CrossAxisAlignment.start,
+      mainAxisSize: fm.MainAxisSize.min,
+      children: [
+        fm.Text('$label  —  ${value.toStringAsFixed(1)}'),
+        fm.Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          label: value.toStringAsFixed(1),
+          onChanged: (v) => setState(() => onChanged(v)),
+        ),
+      ],
     );
   }
 
   @override
   fm.Widget build(fm.BuildContext context) {
+    // Fit the slider rows to the window: AlertDialog eats inset + content
+    // padding, so a fixed 400 overflowed the sequencer window. Subtract a
+    // generous margin and clamp so it's readable but never wider than the
+    // dialog's content area.
+    final contentWidth =
+        (fm.MediaQuery.of(context).size.width - 150).clamp(200.0, 300.0).toDouble();
     return fm.AlertDialog(
-      title: const fm.Text('Resolve'),
+      scrollable: true, // tall (label-above-slider) content scrolls instead of overflowing a short window
+      title: const fm.Text('Resolve danceability',
+          style: fm.TextStyle(fontSize: 20, fontWeight: fm.FontWeight.bold)),
+      titlePadding: const fm.EdgeInsets.fromLTRB(20, 16, 20, 8),
+      contentPadding: const fm.EdgeInsets.fromLTRB(20, 0, 20, 0),
       content: fm.SizedBox(
-        width: 400,
-        child: fm.Column(mainAxisSize: fm.MainAxisSize.min, children: [
-          _row('Lane-clearance', _lane, 0, 100, 20, (v) => _lane = v),
-          _row('Overlap (reserved)', _overlap, 0, 100, 20, (v) => _overlap = v),
-          _row('Corner-distance', _dist, 0, 100, 20, (v) => _dist = v),
-          _row('Offer threshold', _threshold, 0, 100, 20, (v) => _threshold = v),
-          _row('Block width', _blockWidth, 0.5, 2.0, 15, (v) => _blockWidth = v),
-        ]),
+        width: contentWidth,
+        child: fm.Column(
+          mainAxisSize: fm.MainAxisSize.min,
+          crossAxisAlignment: fm.CrossAxisAlignment.stretch,
+          children: [
+            _control('Lane-clearance', _lane, 0, 100, 20, (v) => _lane = v),
+            _control('Overlap (reserved)', _overlap, 0, 100, 20, (v) => _overlap = v),
+            _control('Corner-distance', _dist, 0, 100, 20, (v) => _dist = v),
+            _control('Offer threshold', _threshold, 0, 100, 20, (v) => _threshold = v),
+            _control('Block width', _blockWidth, 0.5, 2.0, 15, (v) => _blockWidth = v),
+          ],
+        ),
       ),
       actions: [
         fm.TextButton(
