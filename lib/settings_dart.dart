@@ -228,4 +228,42 @@ class Settings {
     //  no need to notify listeners
   }
 
+  // Danceability resolver tuning (TH-local; sent as per-call overrides to SC when the toggle is on).
+  // Doubles are stored as Strings because the settings proxy exposes only bool/String.
+  static bool get danceabilityOverride =>
+      _instance.proxy.getBool('Danceability Override') ?? false;
+  static set danceabilityOverride(bool value) {
+    _instance.proxy.setBool('Danceability Override', value);
+    _instance.notifyListeners();
+  }
+
+  static double _danceDouble(String key, double fallback) =>
+      double.tryParse(_instance.proxy.getString(key) ?? '') ?? fallback;
+
+  static double get danceabilityLaneWeight => _danceDouble('Danceability Lane Weight', 70);
+  static set danceabilityLaneWeight(double v) {
+    _instance.proxy.setString('Danceability Lane Weight', v.toString());
+    _instance.notifyListeners();
+  }
+  static double get danceabilityOverlapWeight => _danceDouble('Danceability Overlap Weight', 25);
+  static set danceabilityOverlapWeight(double v) {
+    _instance.proxy.setString('Danceability Overlap Weight', v.toString());
+    _instance.notifyListeners();
+  }
+  static double get danceabilityDistWeight => _danceDouble('Danceability Dist Weight', 5);
+  static set danceabilityDistWeight(double v) {
+    _instance.proxy.setString('Danceability Dist Weight', v.toString());
+    _instance.notifyListeners();
+  }
+  static double get danceabilityThreshold => _danceDouble('Danceability Threshold', 60);
+  static set danceabilityThreshold(double v) {
+    _instance.proxy.setString('Danceability Threshold', v.toString());
+    _instance.notifyListeners();
+  }
+  static double get danceabilityBlockWidth => _danceDouble('Danceability Block Width', 1.0);
+  static set danceabilityBlockWidth(double v) {
+    _instance.proxy.setString('Danceability Block Width', v.toString());
+    _instance.notifyListeners();
+  }
+
 }
