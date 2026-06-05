@@ -30,11 +30,14 @@ abstract class _BaseSettings {
   void setString(String key, String value);
 }
 
+// In-memory store so headless/widget tests can round-trip values (each
+// mockInit() makes a fresh instance, so tests stay isolated).
 class _MockSettings extends _BaseSettings {
-  @override bool? getBool(String key) => null;
-  @override void setBool(String key, bool value) { }
-  @override String? getString(String key) => null;
-  @override void setString(String key, String value) { }
+  final Map<String, Object> _store = {};
+  @override bool? getBool(String key) => _store[key] as bool?;
+  @override void setBool(String key, bool value) { _store[key] = value; }
+  @override String? getString(String key) => _store[key] as String?;
+  @override void setString(String key, String value) { _store[key] = value; }
 }
 
 class Settings {
