@@ -34,6 +34,7 @@ import '../pages/calls_page.dart';
 import '../pages/page.dart';
 import '../resolve_client.dart';
 import 'abbreviations_model.dart';
+import 'danceability_resolve_dialog.dart';
 import 'sequencer_model.dart';
 import 'words.dart';
 
@@ -429,6 +430,23 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
     }
   }
 
+  // Resolve flow entry point: open the danceability pre-flight dialog; only if
+  // the user hits Go (which saved their values to Settings) do we resolve.
+  Future<void> _onResolvePressed(
+      fm.BuildContext context, SequencerModel model) async {
+    if (model.calls.isEmpty) {
+      _snack(context, 'Nothing to resolve.');
+      return;
+    }
+    final go = await fm.showDialog<bool>(
+      context: context,
+      builder: (_) => DanceabilityResolveDialog(),
+    );
+    if (go != true) return;
+    if (!mounted) return;
+    await _resolve(context, model);
+  }
+
   Future<void> _resolve(fm.BuildContext context, SequencerModel model) async {
     if (model.calls.isEmpty) {
       _snack(context, 'Nothing to resolve.');
@@ -510,7 +528,7 @@ class _SequencerResolveButtonState extends fm.State<SequencerResolveButton> {
     final model = pp.Provider.of<SequencerModel>(context, listen: false);
     return fm.Expanded(
       child: Button('Resolve',
-          onPressed: _busy ? null : () => _resolve(context, model)),
+          onPressed: _busy ? null : () => _onResolvePressed(context, model)),
     );
   }
 }
