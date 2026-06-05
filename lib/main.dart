@@ -44,6 +44,7 @@ import 'pages/start_practice_page.dart';
 import 'pages/tutorial_page.dart';
 import 'resolve_client.dart';
 import 'sequencer/abbreviations_frame.dart';
+import 'sequencer/resolver_panel_controller.dart';
 import 'sequencer/abbreviations_model.dart';
 import 'sequencer/sequencer_calls_page.dart';
 import 'sequencer/sequencer_page.dart';
@@ -238,6 +239,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                         return model;
                       }),
                       pp.ChangeNotifierProvider(create: (_) => HighlightState()),
+                      pp.ChangeNotifierProvider(create: (_) => ResolverPanelController()),
                       pp.Provider(create: (_) => VirtualKeyboardVisible())
                     ],
                     child: fm.ValueListenableBuilder<bool>(
