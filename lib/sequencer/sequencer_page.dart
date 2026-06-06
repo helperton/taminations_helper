@@ -111,9 +111,9 @@ class _SequencerPageState extends fm.State<SequencerPage> {
       child: Page(
         showsTitleBar: false,
         respectsTopSafeArea: false,
-        child: fm.Column(children: [
-          fm.Expanded(
-            child: pp.Consumer2<TitleModel,Settings>(
+        child: pp.Consumer<ResolverPanelController>(
+          builder: (rcx, rc, _) {
+            final content = pp.Consumer2<TitleModel,Settings>(
             builder: (context,titleModel,settings,_) {
               //  Setting the formation here if also set above
               //  can clobber calls passed in by the URL
@@ -152,23 +152,33 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               }
               return _desktopLandscapeContent();
             }
-            )),
-            pp.Consumer<ResolverPanelController>(
-              builder: (ctx, c, _) => c.isOpen
-                  ? fm.SizedBox(
-                      height: 360, // matches resolverPaneHeight in main.dart
-                      child: ResolvePanel(
-                        onGo: () => SequencerResolveActions.go(ctx),
-                        onForward: () => SequencerResolveActions.forward(ctx),
-                        onBack: () => SequencerResolveActions.back(ctx),
-                        onAccept: () => SequencerResolveActions.accept(ctx),
-                        onDismiss: () => SequencerResolveActions.dismiss(ctx),
-                        onCancel: () => SequencerResolveActions.cancel(ctx),
-                      ),
-                    )
-                  : const fm.SizedBox.shrink(),
-            ),
-          ]),
+            );
+            if (!rc.isOpen) return content;
+            final isDark = fm.Theme.of(rcx).brightness == fm.Brightness.dark;
+            final dividerColor = isDark ? const fm.Color(0xFF444444) : fm.Colors.black;
+            return ResizableContainer(
+              direction: fm.Axis.vertical,
+              children: [
+                ResizableChild(
+                  size: ResizableSize.expand(flex: 1),
+                  divider: ResizableDivider(thickness: 8, color: dividerColor),
+                  child: content,
+                ),
+                ResizableChild(
+                  size: ResizableSize.pixels(300),
+                  child: ResolvePanel(
+                    onGo: () => SequencerResolveActions.go(rcx),
+                    onForward: () => SequencerResolveActions.forward(rcx),
+                    onBack: () => SequencerResolveActions.back(rcx),
+                    onAccept: () => SequencerResolveActions.accept(rcx),
+                    onDismiss: () => SequencerResolveActions.dismiss(rcx),
+                    onCancel: () => SequencerResolveActions.cancel(rcx),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -56,7 +56,8 @@ class _ResolvePanelState extends fm.State<ResolvePanel> {
         crossAxisAlignment: fm.CrossAxisAlignment.start,
         mainAxisSize: fm.MainAxisSize.min,
         children: [
-          fm.Text('$label  —  ${value.toStringAsFixed(1)}'),
+          fm.Text('$label  —  ${value.toStringAsFixed(1)}',
+              style: const fm.TextStyle(fontSize: 12)),
           fm.Slider(
               value: value,
               min: min,
@@ -74,7 +75,7 @@ class _ResolvePanelState extends fm.State<ResolvePanel> {
     return fm.Material(
       color: isDark ? Color.BLACK : Color.FLOOR,
       child: fm.SingleChildScrollView(
-        padding: const fm.EdgeInsets.all(8),
+        padding: const fm.EdgeInsets.all(4),
         child: switch (c.phase) {
           ResolverPhase.danceability => _danceabilityView(),
           ResolverPhase.resolving => const fm.Padding(
@@ -88,21 +89,28 @@ class _ResolvePanelState extends fm.State<ResolvePanel> {
     );
   }
 
-  fm.Widget _danceabilityView() => fm.Column(
-        mainAxisSize: fm.MainAxisSize.min,
-        crossAxisAlignment: fm.CrossAxisAlignment.stretch,
-        children: [
-          _slider('Lane-clearance', _lane, 0, 100, 20, (v) => _lane = v),
-          _slider('Overlap (reserved)', _overlap, 0, 100, 20, (v) => _overlap = v),
-          _slider('Corner-distance', _dist, 0, 100, 20, (v) => _dist = v),
-          _slider('Offer threshold', _threshold, 0, 100, 20, (v) => _threshold = v),
-          _slider('Block width', _blockWidth, 0.5, 2.0, 15, (v) => _blockWidth = v),
-          fm.Row(mainAxisAlignment: fm.MainAxisAlignment.spaceEvenly, children: [
-            fm.TextButton(onPressed: widget.onCancel, child: const fm.Text('Cancel')),
-            fm.TextButton(onPressed: _reset, child: const fm.Text('Reset')),
-            fm.FilledButton(onPressed: _saveAndGo, child: const fm.Text('Go')),
-          ]),
-        ],
+  fm.Widget _danceabilityView() => fm.SliderTheme(
+        data: fm.SliderTheme.of(context).copyWith(
+          trackHeight: 2,
+          thumbShape: const fm.RoundSliderThumbShape(enabledThumbRadius: 7),
+          overlayShape: const fm.RoundSliderOverlayShape(overlayRadius: 12),
+        ),
+        child: fm.Column(
+          mainAxisSize: fm.MainAxisSize.min,
+          crossAxisAlignment: fm.CrossAxisAlignment.stretch,
+          children: [
+            _slider('Lane-clearance', _lane, 0, 100, 20, (v) => _lane = v),
+            _slider('Overlap (reserved)', _overlap, 0, 100, 20, (v) => _overlap = v),
+            _slider('Corner-distance', _dist, 0, 100, 20, (v) => _dist = v),
+            _slider('Offer threshold', _threshold, 0, 100, 20, (v) => _threshold = v),
+            _slider('Block width', _blockWidth, 0.5, 2.0, 15, (v) => _blockWidth = v),
+            fm.Row(mainAxisAlignment: fm.MainAxisAlignment.spaceEvenly, children: [
+              fm.TextButton(onPressed: widget.onCancel, child: const fm.Text('Cancel')),
+              fm.TextButton(onPressed: _reset, child: const fm.Text('Reset')),
+              fm.FilledButton(onPressed: _saveAndGo, child: const fm.Text('Go')),
+            ]),
+          ],
+        ),
       );
 
   fm.Widget _stepView(ResolverPanelController c) => fm.Column(
@@ -113,6 +121,7 @@ class _ResolvePanelState extends fm.State<ResolvePanel> {
             fm.Text(
               '${i < c.loadedSteps ? "▸ " : "   "}${c.resolution[i]}',
               style: fm.TextStyle(
+                  fontSize: 12,
                   fontWeight: i == c.loadedSteps - 1
                       ? fm.FontWeight.bold
                       : fm.FontWeight.normal),
