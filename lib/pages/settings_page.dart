@@ -90,6 +90,7 @@ class SequencerSettingsFrame extends fm.StatelessWidget {
                 DancerIdentificationWidget(),
                 GeometrySettingWidget(),
                 JoinCallsWithWidget(),
+                ResolverPanelSideWidget(),
               ]));
         });
   }
@@ -439,6 +440,26 @@ class GeometrySettingWidget extends fm.StatelessWidget {
                 values: ['None', 'Hexagon', 'Bi-Gon', 'Hashtag'],
                 onChanged: (value) {
                   Settings.geometry = value;
+                }),
+          ]),
+    );
+  }
+}
+
+class ResolverPanelSideWidget extends fm.StatelessWidget {
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return pp.Consumer<Settings>(
+      builder: (context, settings, child) => fm.Column(
+          crossAxisAlignment: fm.CrossAxisAlignment.stretch,
+          children: [
+            _SettingTitle('Resolver Panel Side'),
+            _SettingRadioGroup(
+                groupName: 'Resolver Panel Side',
+                groupValue: Settings.resolverPanelSide,
+                values: ['Bottom', 'Top', 'Left', 'Right'],
+                onChanged: (value) {
+                  Settings.resolverPanelSide = value;
                 }),
           ]),
     );

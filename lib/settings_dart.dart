@@ -263,4 +263,13 @@ class Settings {
     _instance.notifyListeners();
   }
 
+  // Which side the resolve pushout panel extends the window toward.
+  // One of: Bottom (default), Top, Left, Right.
+  static String get resolverPanelSide =>
+      _instance.proxy.getString('Resolver Panel Side') ?? 'Bottom';
+  static set resolverPanelSide(String value) {
+    _instance.proxy.setString('Resolver Panel Side', value);
+    _instance.notifyListeners();
+  }
+
 }

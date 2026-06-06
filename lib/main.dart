@@ -167,7 +167,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
   static const sidecarWidthRatio = 0.16;
   static const sidecarHeightRatio = 0.94;
   static const sidecarDarkBackground = fm.Color(0xFF000000);
-  static const resolverPaneHeight = 360.0; // extra height for the resolve pushout panel
+  static const resolverPaneHeight = 360.0; // extra height for the resolve pushout panel (Bottom/Top)
+  static const resolverPaneWidth = 380.0; // extra width for the resolve pushout panel (Left/Right)
   SidecarDockRequest? _lastDockRequest;
   bool _resolverOpen = false;
   late final TaminationsRouterDelegate _routerDelegate;
@@ -344,7 +345,6 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       return;
     }
     _lastDockRequest = request;
-    final extra = _resolverOpen ? resolverPaneHeight : 0.0;
     _darkMode.value = request.darkMode;
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
@@ -352,7 +352,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     if (request.dockFrame != null) {
       final dockFrame = request.dockFrame!;
       final targetWidth = min(dockFrame.width, request.screenFrame.width);
-      final targetHeight = min(dockFrame.height + extra, request.screenFrame.height);
+      final targetHeight = min(dockFrame.height, request.screenFrame.height);
       final targetLeft = max(
         request.screenFrame.left,
         min(dockFrame.left, request.screenFrame.right - targetWidth),
@@ -364,12 +364,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
           max(0, request.screenFrame.height - targetHeight),
         ),
       );
-      await windowManager.setBounds(fm.Rect.fromLTWH(
-        targetLeft,
-        targetTop,
-        targetWidth,
-        targetHeight,
-      ));
+      await windowManager.setBounds(_applyResolverGrow(
+          targetLeft, targetTop, targetWidth, targetHeight, request.screenFrame));
       await windowManager.show();
       await windowManager.focus();
       return;
@@ -379,7 +375,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       request.screenFrame.width,
     );
     final targetHeight = min(
-      request.hostFrame.height * sidecarHeightRatio + extra,
+      request.hostFrame.height * sidecarHeightRatio,
       request.screenFrame.height,
     );
     final targetLeft = min(
@@ -390,12 +386,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       convertTopOriginY(request.hostFrame, height: sidecarTopOffset),
       max(0, request.screenFrame.height - targetHeight),
     );
-    await windowManager.setBounds(fm.Rect.fromLTWH(
-      targetLeft,
-      targetTop,
-      targetWidth,
-      targetHeight,
-    ));
+    await windowManager.setBounds(_applyResolverGrow(
+        targetLeft, targetTop, targetWidth, targetHeight, request.screenFrame));
     await windowManager.show();
     await windowManager.focus();
   }
@@ -407,6 +399,37 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     _resolverOpen = open;
     final req = _lastDockRequest;
     if (req != null) await _dockWindow(req);
+  }
+
+  // Grows the docked sidecar rect toward the configured side to make room for
+  // the resolve pushout panel, then clamps back onto the screen. Bottom/Top add
+  // height; Left/Right add width. Returns the base rect unchanged when closed.
+  fm.Rect _applyResolverGrow(
+      double left, double top, double width, double height, fm.Rect screen) {
+    if (!_resolverOpen) return fm.Rect.fromLTWH(left, top, width, height);
+    switch (Settings.resolverPanelSide) {
+      case 'Top':
+        top -= resolverPaneHeight;
+        height += resolverPaneHeight;
+        break;
+      case 'Left':
+        left -= resolverPaneWidth;
+        width += resolverPaneWidth;
+        break;
+      case 'Right':
+        width += resolverPaneWidth;
+        break;
+      case 'Bottom':
+      default:
+        height += resolverPaneHeight;
+        break;
+    }
+    // Keep the grown window on-screen: clamp size, then position.
+    height = min(height, screen.height);
+    width = min(width, screen.width);
+    top = max(0.0, min(top, screen.height - height));
+    left = max(screen.left, min(left, screen.right - width));
+    return fm.Rect.fromLTWH(left, top, width, height);
   }
 }
 

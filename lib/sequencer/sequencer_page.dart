@@ -156,26 +156,30 @@ class _SequencerPageState extends fm.State<SequencerPage> {
             if (!rc.isOpen) return content;
             final isDark = fm.Theme.of(rcx).brightness == fm.Brightness.dark;
             final dividerColor = isDark ? const fm.Color(0xFF444444) : fm.Colors.black;
+            final side = Settings.resolverPanelSide;
+            final isHorizontal = side == 'Left' || side == 'Right';
+            final panelFirst = side == 'Top' || side == 'Left';
+            final divider = ResizableDivider(thickness: 8, color: dividerColor);
+            final panelChild = ResizableChild(
+              size: ResizableSize.pixels(300),
+              divider: divider,
+              child: ResolvePanel(
+                onGo: () => SequencerResolveActions.go(rcx),
+                onForward: () => SequencerResolveActions.forward(rcx),
+                onBack: () => SequencerResolveActions.back(rcx),
+                onAccept: () => SequencerResolveActions.accept(rcx),
+                onDismiss: () => SequencerResolveActions.dismiss(rcx),
+                onCancel: () => SequencerResolveActions.cancel(rcx),
+              ),
+            );
+            final contentChild = ResizableChild(
+              size: ResizableSize.expand(flex: 1),
+              divider: divider,
+              child: content,
+            );
             return ResizableContainer(
-              direction: fm.Axis.vertical,
-              children: [
-                ResizableChild(
-                  size: ResizableSize.expand(flex: 1),
-                  divider: ResizableDivider(thickness: 8, color: dividerColor),
-                  child: content,
-                ),
-                ResizableChild(
-                  size: ResizableSize.pixels(300),
-                  child: ResolvePanel(
-                    onGo: () => SequencerResolveActions.go(rcx),
-                    onForward: () => SequencerResolveActions.forward(rcx),
-                    onBack: () => SequencerResolveActions.back(rcx),
-                    onAccept: () => SequencerResolveActions.accept(rcx),
-                    onDismiss: () => SequencerResolveActions.dismiss(rcx),
-                    onCancel: () => SequencerResolveActions.cancel(rcx),
-                  ),
-                ),
-              ],
+              direction: isHorizontal ? fm.Axis.horizontal : fm.Axis.vertical,
+              children: panelFirst ? [panelChild, contentChild] : [contentChild, panelChild],
             );
           },
         ),
