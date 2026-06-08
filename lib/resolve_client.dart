@@ -5,12 +5,15 @@ import 'dart:convert';
 /// Categories for a resolve attempt that did not return a usable resolution.
 enum ResolveError { none, unreachable, unauthorized, timeout, badResponse }
 
-/// Parsed result of a call to SC's /patter/fasr/resolve-hybrid.
+/// Parsed result of a call to SC's /patter/fasr/resolve-sight (the caller-style sight resolver
+/// first, with the hybrid brute-force search as the fallback).
 /// [parse] does no I/O, so it is unit-testable on its own.
 class ResolveResult {
   final String state;
   final bool resolved;
   final List<String> resolution;
+  /// Which resolver produced the resolution: "sight" or "hybrid-fallback" (empty if unresolved).
+  final String method;
   final String note;
   final ResolveError error;
 
@@ -18,6 +21,7 @@ class ResolveResult {
     this.state = '?',
     this.resolved = false,
     this.resolution = const [],
+    this.method = '',
     this.note = '',
     this.error = ResolveError.none,
   });
@@ -38,7 +42,9 @@ class ResolveResult {
       if (decoded['resolved'] == true) {
         final raw = decoded['resolution'];
         final resolution = raw is List ? raw.cast<String>().toList() : <String>[];
-        return ResolveResult(state: state, resolved: true, resolution: resolution);
+        return ResolveResult(
+            state: state, resolved: true, resolution: resolution,
+            method: decoded['method'] as String? ?? '');
       }
       return ResolveResult(
           state: state, resolved: false, note: decoded['note'] as String? ?? '');
@@ -56,15 +62,16 @@ class ResolveClient {
   static const _host = 'localhost';
   static const _port = 7233;
 
-  /// GET the call history to /resolve-hybrid and return the parsed result.
+  /// GET the call history to /resolve-sight and return the parsed result.
   /// Never throws: any connection, timeout, or transport failure maps to a ResolveResult error.
-  /// Builds the /resolve-hybrid request URL: the comma-joined calls plus any per-call overrides
-  /// (danceability weights/threshold). Pure — no I/O — so it is unit-testable.
+  /// Builds the /resolve-sight request URL: the comma-joined calls plus any per-call overrides
+  /// (danceability weights/threshold — these tune the hybrid fallback only; the sight resolver
+  /// ignores them). Pure — no I/O — so it is unit-testable.
   static Uri buildResolveUri(List<String> calls, Map<String, String> overrides) {
     final params = <String, String>{'calls': calls.join(',')};
     params.addAll(overrides);
     return Uri(scheme: 'http', host: _host, port: _port,
-        path: '/patter/fasr/resolve-hybrid', queryParameters: params);
+        path: '/patter/fasr/resolve-sight', queryParameters: params);
   }
 
   static Future<ResolveResult> resolve(List<String> calls,

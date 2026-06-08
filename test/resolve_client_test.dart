@@ -11,6 +11,15 @@ void main() {
     expect(r.resolution, ['RIGHT AND LEFT GRAND', 'PROMENADE HOME']);
   });
 
+  test('parse: captures the resolver method (sight / hybrid-fallback)', () {
+    final s = ResolveResult.parse(200,
+        '{"state":"[0Q]2p","resolved":true,"method":"sight","resolution":["EXTEND"]}');
+    expect(s.method, 'sight');
+    final h = ResolveResult.parse(200,
+        '{"state":"[0?]2o","resolved":true,"method":"hybrid-fallback","resolution":["X"]}');
+    expect(h.method, 'hybrid-fallback');
+  });
+
   test('parse: resolved=false carries the note', () {
     final r = ResolveResult.parse(200,
         '{"state":"[0T-Bone]1p","resolved":false,"note":"unresolved within the bounded hybrid search"}');
@@ -50,7 +59,7 @@ void main() {
 
   test('buildResolveUri: calls only when no overrides', () {
     final u = ResolveClient.buildResolveUri(['Heads Lead Right', 'Veer Left'], const {});
-    expect(u.path, '/patter/fasr/resolve-hybrid');
+    expect(u.path, '/patter/fasr/resolve-sight');
     expect(u.queryParameters['calls'], 'Heads Lead Right,Veer Left');
     expect(u.queryParameters.containsKey('lane'), isFalse);
     expect(u.queryParameters.containsKey('threshold'), isFalse);

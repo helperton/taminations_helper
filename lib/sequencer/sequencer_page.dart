@@ -160,27 +160,34 @@ class _SequencerPageState extends fm.State<SequencerPage> {
             final isHorizontal = side == 'Left' || side == 'Right';
             final panelFirst = side == 'Top' || side == 'Left';
             final divider = ResizableDivider(thickness: 8, color: dividerColor);
-            final panelChild = ResizableChild(
-              size: ResizableSize.pixels(300),
-              divider: divider,
-              child: ResolvePanel(
-                onGo: () => SequencerResolveActions.go(rcx),
-                onForward: () => SequencerResolveActions.forward(rcx),
-                onBack: () => SequencerResolveActions.back(rcx),
-                onAccept: () => SequencerResolveActions.accept(rcx),
-                onDismiss: () => SequencerResolveActions.dismiss(rcx),
-                onCancel: () => SequencerResolveActions.cancel(rcx),
-              ),
-            );
-            final contentChild = ResizableChild(
-              size: ResizableSize.expand(flex: 1),
-              divider: divider,
-              child: content,
-            );
-            return ResizableContainer(
-              direction: isHorizontal ? fm.Axis.horizontal : fm.Axis.vertical,
-              children: panelFirst ? [panelChild, contentChild] : [contentChild, panelChild],
-            );
+            return fm.LayoutBuilder(builder: (lctx, constraints) {
+              // Adaptive panel: cap to 300px, but never more than 45% of the window, so the floor
+              // always keeps a workable share and the panel can't overflow a narrow window. No window
+              // resize is involved, so this is reliable regardless of docking / resize timing.
+              final avail = isHorizontal ? constraints.maxWidth : constraints.maxHeight;
+              final panelSize = (avail * 0.45).clamp(0.0, 300.0);
+              final panelChild = ResizableChild(
+                size: ResizableSize.pixels(panelSize),
+                divider: divider,
+                child: ResolvePanel(
+                  onGo: () => SequencerResolveActions.go(rcx),
+                  onForward: () => SequencerResolveActions.forward(rcx),
+                  onBack: () => SequencerResolveActions.back(rcx),
+                  onAccept: () => SequencerResolveActions.accept(rcx),
+                  onDismiss: () => SequencerResolveActions.dismiss(rcx),
+                  onCancel: () => SequencerResolveActions.cancel(rcx),
+                ),
+              );
+              final contentChild = ResizableChild(
+                size: ResizableSize.expand(flex: 1),
+                divider: divider,
+                child: content,
+              );
+              return ResizableContainer(
+                direction: isHorizontal ? fm.Axis.horizontal : fm.Axis.vertical,
+                children: panelFirst ? [panelChild, contentChild] : [contentChild, panelChild],
+              );
+            });
           },
         ),
       ),

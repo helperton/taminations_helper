@@ -117,6 +117,13 @@ class _ResolvePanelState extends fm.State<ResolvePanel> {
         mainAxisSize: fm.MainAxisSize.min,
         crossAxisAlignment: fm.CrossAxisAlignment.stretch,
         children: [
+          if (c.method.isNotEmpty)
+            fm.Padding(
+              padding: const fm.EdgeInsets.only(bottom: 4),
+              child: fm.Text(
+                  c.method == 'sight' ? 'Resolved by sight' : 'Resolved by hybrid fallback',
+                  style: const fm.TextStyle(fontSize: 11, fontStyle: fm.FontStyle.italic)),
+            ),
           for (var i = 0; i < c.resolution.length; i++)
             fm.Text(
               '${i < c.loadedSteps ? "▸ " : "   "}${c.resolution[i]}',

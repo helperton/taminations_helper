@@ -16,6 +16,7 @@ class ResolverPanelController extends f.ChangeNotifier {
   int loadedSteps = 0; // get-out calls currently loaded into the model
   int baseline = 0;    // model.calls.length captured before resolving
   String note = '';
+  String method = ''; // "sight" or "hybrid-fallback" — which resolver produced the get-out
 
   /// Set by the app; fired when the panel opens (true) or closes (false).
   void Function(bool open)? onOpenChanged;
@@ -35,6 +36,7 @@ class ResolverPanelController extends f.ChangeNotifier {
   }
 
   void applyResult(ResolveResult r, {required int baselineCount}) {
+    method = r.method;
     if (r.error != ResolveError.none) {
       phase = ResolverPhase.failed;
       note = 'SquareCraft: ${r.error.name}';
@@ -78,6 +80,7 @@ class ResolverPanelController extends f.ChangeNotifier {
     loadedSteps = 0;
     baseline = 0;
     note = '';
+    method = '';
     notifyListeners();
     onOpenChanged?.call(false);
   }
