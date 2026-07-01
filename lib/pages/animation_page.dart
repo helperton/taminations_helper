@@ -19,6 +19,7 @@
 */
 
 import 'package:flutter/gestures.dart' as fg;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as fm;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart' as pp;
@@ -234,6 +235,10 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
         builder: (context, constraints) {
           final isSmall = constraints.maxHeight < 350;
           final isSequencer = appState.mainPage == MainPage.SEQUENCER;
+          //  #103 embed (web + ?embed=1): hide every player control — slider,
+          //  ticks, buttons, beat/speed/loop, theme toggle — so only the dance
+          //  floor shows. The parent drives the animation over the bridge.
+          final embed = kIsWeb && Uri.base.queryParameters['embed'] == '1';
           //  Update current part which will notify definition to change highlights
           later(() {
             highlightState.currentPart = danceModel.currentPart;
@@ -340,7 +345,7 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
                                         _Note(),
                                         //  Info to show at bottom right
                                         //  Sequencer Beat, Speed, Looping
-                                        fm.Positioned(
+                                        if (!embed) fm.Positioned(
                                           bottom: 0.0,
                                           right: 0.0,
                                           child: fm.Row(
@@ -360,7 +365,7 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
                           ),
                           //  Theme tuning toggle at bottom left — above the
                           //  GestureDetector so it receives clicks
-                          if (isDark)
+                          if (isDark && !embed)
                             fm.Positioned(
                               bottom: 4.0,
                               left: 4.0,
@@ -381,14 +386,14 @@ class _AnimationFrameState extends fm.State<AnimationFrame>
                     })),
 
                 //  Slider to show current animation position
-            _Slider(),
+            if (!embed) _Slider(),
 
                 //  Painter to show animation start, end, beats, and parts
-            if (!isSmall)
+            if (!embed && !isSmall)
               _SliderTicks(),
 
                 //  Buttons to control the animation
-            _AnimationButtons()
+            if (!embed) _AnimationButtons()
               ]); }
       )
     );

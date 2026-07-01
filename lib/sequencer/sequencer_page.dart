@@ -18,6 +18,7 @@
 
 */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:provider/provider.dart' as pp;
@@ -120,6 +121,13 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               if (!formationSetByState)
                 model.setStartingFormation(validStartingFormation(Settings.startingFormation));
               titleModel.title = 'Sequencer';
+              // #103 embed: floor-only. With ?embed=1 on web, render just the
+              // animation floor — no controls, input, buttons, or menu — while
+              // staying inside this page's provider scope so it's fully wired
+              // and bridge-driven. The standalone app is unaffected.
+              if (kIsWeb && Uri.base.queryParameters['embed'] == '1') {
+                return fm.Column(children: [BasicSequencerAnimation()]);
+              }
               if (TamUtils.isWindowDevice) {
                 return fm.LayoutBuilder(
                   builder: (context, constraints) => fm.ClipRect(
