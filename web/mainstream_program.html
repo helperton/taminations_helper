@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mainstream Program</title>
+  <meta name="viewport" content="width=device-width, height=device-height, interactive-widget=resizes-content, initial-scale=1.0">
+  <link rel="stylesheet" href="ssd.css">
+  <script type="application/javascript" src="ssd.js"></script>
+</head>
+<body style="overflow: hidden" onload="startup()">
+
+<div class="flex-container">  <!-- Container for all 3 frames -->
+
+  <!--  First frame - call index -->
+  <div id="index-page" class="flex-item">
+    <h1>Tam Twirlers Mainstream Program May-September 2026</h1>
+
+    <h2>May 13</h2>
+    <ul>
+      <!-- Each call is just a reload of this page with a search parameter
+           of the call to show.  Call names match the names in the table
+           in ssd.js, case not important.  -->
+      <li><a href="javascript:setAnimation(calls.boxthegnat)">Box the Gnat</a></li>
+      <li><a href="javascript:setAnimation(calls.wrongwaygrand)">Wrong Way Grand</a></li>
+      <li><a href="javascript:setAnimation(calls.sweepaquarter)">Sweep a Quarter</a></li>
+      <li><a href="javascript:setAnimation(calls.slidethru)">Slide Thru</a></li>
+      <li><a href="javascript:setAnimation(calls.circletoaline)">Circle to a Line</a></li>
+      <li><a href="javascript:setAnimation(calls.girlsrun)">Girls Run</a></li>
+      <li><a href="javascript:setAnimation(calls.tradeby)">Trade By</a></li>
+    </ul>
+
+    <h2>May 20</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.ferriswheel)">Ferris Wheel</a></li>
+      <li><a href="javascript:setAnimation(calls.passtheocean)">Pass the Ocean</a></li>
+      <li><a href="javascript:setAnimation(calls.extend)">Extend</a></li>
+      <li><a href="javascript:setAnimation(calls.zoom)">Zoom</a></li>
+    </ul>
+
+    <h2>May 27</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.centersin)">Centers In</a></li>
+      <li><a href="javascript:setAnimation(calls.castoff34)">Cast Off 3/4</a></li>
+      <li><a href="javascript:setAnimation(calls.alamostyle)">Alamo Style</a></li>
+    </ul>
+
+    <h2>June 3</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.hinge)">Hinge</a></li>
+      <li><a href="javascript:setAnimation(calls.touch14)">Touch 1/4</a></li>
+      <li><a href="javascript:setAnimation(calls.singlefilecirculate)">Column Circulate</a></li>
+    </ul>
+
+    <h2>June 10</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.tagtheline)">Tag the Line</a></li>
+      <li><a href="javascript:setAnimation(calls.fold)">Fold</a></li>
+    </ul>
+
+    <h2>June 17</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.splitcirculate)">Split Circulate</a></li>
+      <li><a href="javascript:setAnimation(calls.scootback)">Scoot Back</a></li>
+      <li><a href="javascript:setAnimation(calls.crossfold)">Cross Fold</a></li>
+    </ul>
+
+    <h2>June 24</h2>
+    <ul>
+      <li>Review</li>
+    </ul>
+
+    <h2>July 1</h2>
+    <ul>
+      <li>*** Dark ***</li>
+    </ul>
+
+    <h2>July 8</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.halftag)">Half Tag</a></li>
+      <li><a href="javascript:setAnimation(calls.recycle)">Recycle</a></li>
+    </ul>
+
+    <h2>July 15</h2>
+    <ul>
+      <li><a href="javascript:setAnimation(calls.crossrun)">Cross Run</a></li>
+      <li><a href="javascript:setAnimation(calls.spinthetop)">Spin the Top</a></li>
+    </ul>
+
+  </div>
+
+  <!--  Second frame - the animation -->
+  <div id="animation-page" class="flex-item noscroll">
+    <div id="animation-title">Select a Call</div>
+    <iframe id="animation"></iframe>
+    <div class="animation-buttons">
+      <input class="button" type="button" value="Call Index" onclick="showIndex()"/>
+      <input class="button" type="button" value="Definition" onclick="showDefinition()"/>
+    </div>
+  </div>
+
+  <!--  Third frame - the definition -->
+  <div id="definition-page" class="flex-item noscroll">
+    <iframe id="definition"></iframe>
+    <div class="animation-buttons">
+      <input class="button" type="button" value="Call Index" onclick="showIndex()"/>
+      <input class="button" type="button" value="Animation" onclick="showAnimation()"/>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

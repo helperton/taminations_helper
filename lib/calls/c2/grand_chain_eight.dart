@@ -46,21 +46,23 @@ import '../../moves.dart';
       formation:Formation('Double Pass Thru'),
       from:'Double Pass Thru',
       paths:[
-          Stand.changehands(Hands.RIGHT) +
-          QuarterLeft.changeBeats(2).skew(1.0,0.0) +
-          UmTurnLeft.changehands(Hands.RIGHT).skew(1.0,-1.0),
+        Stand.changehands(Hands.RIGHT) +
+            Forward_1p5.changeBeats(1) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
-          Stand.changeBeats(2).changehands(Hands.LEFT) +
-          ExtendRight.changeBeats(2) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0),
+        Stand.changehands(Hands.LEFT) +
+            ExtendRight.scale(1.5,2) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5),
 
-          ExtendLeft.scale(1.0,0.5) +
-          QuarterLeft.changeBeats(2).skew(2.0,-0.5) +
-          UmTurnLeft.changehands(Hands.RIGHT).skew(1.0,-1.0),
+        ExtendLeft.scale(1,0.5) +
+            ExtendRight.scale(1.5,0.5) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
 
-          ExtendLeft.scale(1.0,0.5) +
-          ExtendRight.changeBeats(2).scale(2.0,1.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0)
+        ExtendLeft.scale(1,0.5) +
+            ExtendRight.scale(1.5,2.5) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
       ]),
 
     AnimatedCall('Grand Chain Eight',
@@ -73,23 +75,22 @@ import '../../moves.dart';
       from:'Lines',
       paths:[
           ExtendLeft.changeBeats(2).scale(2.0,0.5) +
-          LeadRight.changeBeats(3).scale(2.5,2.5) +
-          QuarterLeft.skew(1.0,0.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+              LeadRight.changeBeats(4.5).scale(2.5,3.5) +
+              UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+              QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
 
           ExtendLeft.changeBeats(2).scale(2.0,0.5) +
-          LeadRight.changeBeats(4).scale(0.5,1.5) +
-          HingeLeft.changeBeats(3).scale(1.0,0.5),
+              LeadRight.changeBeats(4.5).scale(0.5,1.5) +
+              HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
 
           ExtendLeft.changeBeats(2).scale(2.0,0.5) +
-          FlipLeft.changeBeats(4).scale(1.0,0.25).skew(1.5,0.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+              LeadLeft.changeBeats(4.5).scale(1.5,0.5) +
+              UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+              QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
 
           ExtendLeft.changeBeats(2).scale(2.0,0.5) +
-          LeadLeft.changeBeats(4.5).scale(3.5,2.5) +
-          HingeLeft.changeBeats(3).scale(1.0,0.5)
+              LeadLeft.changeBeats(4.5).scale(3.5,2.5) +
+              HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
       ]),
 
     AnimatedCall('Grand Chain Eight',
@@ -98,19 +99,19 @@ import '../../moves.dart';
       paths:[
           ExtendLeft.scale(1.0,0.5) +
           ExtendRight.changeBeats(2).scale(2.0,0.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0) +
-          UmTurnLeft,
+              UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(2).skew(0.667,0) +
+              QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(1).skew(-0.333,0),
 
           ExtendLeft.scale(1.0,0.5) +
-          ExtendRight.changeBeats(2).scale(2.0,2.5) +
-          HingeLeft.skew(0.0,1.0),
+          ExtendRight.changeBeats(2).scale(2.0,1.5) +
+          HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(3),
 
           ExtendLeft.scale(1.0,0.5) +
-          ExtendRight.scale(1.0,0.5) +
+          ExtendRight.changeBeats(2).scale(1.0,0.5) +
           BeauWheel,
 
           ExtendLeft.scale(1.0,0.5) +
-          ExtendRight.scale(1.0,0.5) +
+          ExtendRight.changeBeats(2).scale(1.0,0.5) +
           BelleWheel
       ]),
 
@@ -119,16 +120,16 @@ import '../../moves.dart';
       from:'Right-Hand Waves',
       paths:[
           ExtendRight.changeBeats(2).scale(2.0,2.0) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0) +
-          UmTurnLeft,
+              UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(2).skew(0.667,0) +
+              QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(1).skew(-0.333,0),
 
-          Forward.scale(1.0,0.5) +
+          Forward.changeBeats(2).scale(1.0,0.5) +
           BelleWheel,
 
-          ExtendRight.changeBeats(2).scale(2.0,2.0) +
-          HingeLeft.skew(0.0,1.0),
+          ExtendRight.changeBeats(2).scale(2.0,1.0) +
+          HingeLeft.changeBeats(3).changehands(Hands.GRIPLEFT),
 
-          ExtendRight.scale(1.0,2.0) +
+          ExtendRight.changeBeats(2).scale(1.0,2.0) +
           BeauWheel
       ]),
 
@@ -136,38 +137,39 @@ import '../../moves.dart';
         formation:Formation('Quarter Tag'),
         from:'Quarter Tag',
         paths:[
-          QuarterLeft.changeBeats(2).skew(1.0,0.0) +
-              UmTurnLeft.changehands(Hands.RIGHT).skew(1.0,-1.0),
+              Forward_1p5.changeBeats(1) +
+              UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+              QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
-          Stand.changehands(Hands.LEFT) +
-              ExtendRight.changeBeats(2) +
-              QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0),
+              ExtendRight.scale(1.5,2) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5),
 
-          QuarterLeft.changeBeats(2).skew(2.0,-2) +
-              UmTurnLeft.changehands(Hands.RIGHT).skew(1.0,-1.0),
+              ExtendRight.scale(1.5,2) +
+              UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+              QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
 
-          ExtendRight.changeBeats(2).scale(2.0,1) +
-              QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0)
+              ExtendRight.scale(1.5,2) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
         ]),
 
     AnimatedCall('Grand Chain Eight',
       formation:Formation('Tidal Wave RH BGGB'),
       from:'Tidal Wave',
       paths:[
-          LeadRight.changeBeats(3).scale(2.5,2.5) +
-          QuarterLeft.skew(1.0,0.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        LeadRight.changeBeats(4.5).scale(2.5,3.5) +
+            UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+            QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
 
-          LeadLeft.changeBeats(4.5).scale(3.5,2.5) +
-          HingeLeft.changeBeats(3).scale(1.0,0.5),
+        LeadLeft.changeBeats(4.5).scale(3.5,2.5) +
+            HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
 
-          LeadRight.changeBeats(4).scale(0.5,1.5) +
-          HingeLeft.changeBeats(3).scale(1.0,0.5),
+        LeadRight.changeBeats(4.5).scale(0.5,1.5) +
+            HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
 
-          FlipLeft.changeBeats(4).scale(1.0,0.25).skew(1.5,0.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5)
+        LeadLeft.changeBeats(4.5).scale(1.5,0.5) +
+            UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+            QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
+
       ]),
 
     AnimatedCall('Split Grand Chain Eight',
@@ -175,47 +177,47 @@ import '../../moves.dart';
       from:'T-Bones, Ends Facing',
       paths:[
           ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.4,-1.0) +
-          QuarterLeft +
-          BackHingeRight,
-
-          Stand.changeBeats(2) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0),
+              LeadRight.changeBeats(2).scale(1,2) +
+              UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+              QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
           Stand.changeBeats(1) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight,
+              ExtendRight.changeBeats(2).scale(0.5,2) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
+
+        Stand.changeBeats(1) +
+              Forwardp5.changeBeats(2) +
+              UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+              QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
 
           ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0)
+              LeadLeft.changeBeats(2).scale(3,1) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5),
       ]),
 
     AnimatedCall('Split Grand Chain Eight',
       formation:Formation('T-Bone RUUL'),
       from:'T-Bones, Centers Facing',
       paths:[
-          Stand.changeBeats(2) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0),
+          Stand.changeBeats(1) +
+              ExtendRight.changeBeats(2).scale(1.5,2) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5),
 
           Stand.changeBeats(1) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight,
+              Forward_1p5.changeBeats(2) +
+              UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+              QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
           ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          QuarterLeft.changehands(Hands.LEFT).skew(1.0,0.0),
+              Forward_1p5.changeBeats(1) +
+              QuarterLeft.changeBeats(1).skew(1.5, 0) +
+              HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
 
-          ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.4,-1.0) +
-          QuarterLeft +
-          BackHingeRight
+        ExtendLeft.scale(1.0,0.5) +
+              LeadRight.changeBeats(2) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
+
       ]),
 
     AnimatedCall('Split Grand Chain Eight',
@@ -223,99 +225,101 @@ import '../../moves.dart';
       from:'T-Bones 3',
       paths:[
           ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          HingeLeft.scale(1.0,0.5),
+              LeadLeft.changeBeats(2).scale(1.5,0.5) +
+              HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
 
-          ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.37,-1.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        ExtendLeft.scale(1.0,0.5) +
+              LeadRight.changeBeats(2).scale(0.5,1.5) +
+            UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+            QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
+
 
           Stand.changeBeats(1) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+              ExtendRight.changeBeats(2).scale(1,0.5) +
+              UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+              QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
 
-          Stand.changeBeats(2) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          HingeLeft.scale(1.0,0.5)
+          Stand.changeBeats(1) +
+              ExtendRight.changeBeats(2).scale(1,0.5) +
+              HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5)
       ]),
 
     AnimatedCall('Split Grand Chain Eight',
       formation:Formation('T-Bone UURL'),
       from:'T-Bones 4',
       paths:[
-          Stand.changeBeats(1) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        Stand.changeBeats(1) +
+            ExtendRight.changeBeats(2).scale(1,0.5) +
+            UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+            QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
 
-          Stand.changeBeats(2) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          HingeLeft.scale(1.0,0.5),
 
-          ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          HingeLeft.scale(1.0,0.5),
+        Stand.changeBeats(1) +
+            ExtendRight.changeBeats(2).scale(1,0.5) +
+            HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
 
-          ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.37,-1.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5)
+        ExtendLeft.scale(1.0,0.5) +
+            LeadLeft.changeBeats(2).scale(1.5,0.5) +
+            HingeLeft.changehands(Hands.GRIPLEFT).changeBeats(2.4).scale(1,0.5),
+
+        ExtendLeft.scale(1.0,0.5) +
+            LeadRight.changeBeats(2).scale(0.5,1.5) +
+            UmTurnLeft.changehands(Hands.GRIPLEFT).changeBeats(1.6).skew(0.667,0.333) +
+            QuarterLeft.changehands(Hands.GRIPLEFT).changeBeats(0.8).skew(-0.333,-0.167),
       ]),
 
     AnimatedCall('Heads Start Split Grand Chain Eight',
       formation:Formation('Static Square'),
       group:' ',
       paths:[
-          Forward_2 +
-          ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          HingeLeft.changeBeats(2).scale(1.0,0.5),
+        Forward_2 +
+            ExtendLeft.scale(1.0,0.5) +
+            Forward_1p5.changeBeats(1) +
+            QuarterLeft.changeBeats(1).skew(1.5, 0) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
 
-          Forward_2 +
-          ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.4,-1.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        Forward_2 +
+            ExtendLeft.scale(1.0,0.5) +
+            LeadRight.changeBeats(2) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
 
-          Stand.changeBeats(3) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        Stand.changeBeats(3) +
+            Forward_1p5.changeBeats(2) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
-          Stand.changeBeats(4) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          HingeLeft.scale(1.0,0.5)
+        Stand.changeBeats(3) +
+            ExtendRight.changeBeats(2).scale(1.5,2) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5)
       ]),
 
     AnimatedCall('Sides Start Split Grand Chain Eight',
       formation:Formation('Static Square'),
       group:' ',noDisplay: true,
       paths:[
-          Stand.changeBeats(3) +
-          QuarterLeft.changeBeats(1.5).skew(1.0,-0.5) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5),
+        Stand.changeBeats(3) +
+            Forward_1p5.changeBeats(2) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(0.333,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.167,-0.167),
 
-          Stand.changeBeats(4) +
-          ExtendRight.changeBeats(2.5).scale(1.0,0.5) +
-          HingeLeft.scale(1.0,0.5),
+        Stand.changeBeats(3) +
+            ExtendRight.changeBeats(2).scale(1.5,2) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(0.5,1.5),
 
-          Forward_2 +
-          ExtendLeft.scale(1.0,0.5) +
-          LeadLeft.changeBeats(2.5).scale(1.5,0.5) +
-          HingeLeft.changeBeats(2).scale(1.0,0.5),
+        Forward_2 +
+            ExtendLeft.scale(1.0,0.5) +
+            Forward_1p5.changeBeats(1) +
+            QuarterLeft.changeBeats(1).skew(1.5, 0) +
+            HingeLeft.changeBeats(2.4).changehands(Hands.GRIPLEFT).scale(1.5,1.5),
 
-          Forward_2 +
-          ExtendLeft.scale(1.0,0.5) +
-          LeadRight_12.skew(0.0,-0.5) +
-          LeadLeft_12.changeBeats(1.5).skew(-0.4,-1.0) +
-          QuarterLeft +
-          BackHingeRight.scale(1.0,0.5)
+        Forward_2 +
+            ExtendLeft.scale(1.0,0.5) +
+            LeadRight.changeBeats(2) +
+            UmTurnLeft.changeBeats(1.6).changehands(Hands.GRIPLEFT).skew(1,0.333) +
+            QuarterLeft.changeBeats(0.8).changehands(Hands.GRIPLEFT).skew(-0.5,-0.167),
+
+
       ]),
   ];
 

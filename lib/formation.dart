@@ -119,6 +119,11 @@ class Formation {
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:1,angle:0),
     ]),
 
+    Formation('Box RH Boys Lead Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+    ]),
+
     Formation('Box LH', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:-2,y:1,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-1,angle:0),
@@ -137,6 +142,11 @@ class Formation {
     Formation('Box LH Girls Lead', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-1,angle:0),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:1,angle:180),
+    ]),
+
+    Formation('Box LH Girls Lead Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
     ]),
 
     Formation('Wave RH', dancers:[
@@ -470,11 +480,25 @@ class Formation {
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:180),
     ]),
 
+    Formation('Ocean Waves RH GBBG Compact', dancers:[
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
     Formation('Ocean Waves LH GBBG', dancers:[
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:3,angle:180),
       Dancer.fromData(gender:Gender.BOY,x:-2,y:1,angle:0),
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-1,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:0),
+    ]),
+
+    Formation('Ocean Waves LH GBBG Compact', dancers:[
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
     ]),
 
     Formation('Ocean Waves RH BGBG', dancers:[
@@ -484,11 +508,25 @@ class Formation {
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:180),
     ]),
 
+    Formation('Ocean Waves RH BGBG Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
     Formation('Ocean Waves LH BGBG', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:-2,y:3,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:1,angle:0),
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-1,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:0),
+    ]),
+
+    Formation('Ocean Waves LH BGBG Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
     ]),
 
     Formation('Ocean Waves RH GBGB', dancers:[
@@ -498,11 +536,25 @@ class Formation {
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-3,angle:180),
     ]),
 
+    Formation('Ocean Waves RH GBGB Compact', dancers:[
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-3,angle:180),
+    ]),
+
     Formation('Ocean Waves LH GBGB', dancers:[
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:3,angle:180),
       Dancer.fromData(gender:Gender.BOY,x:-2,y:1,angle:0),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-1,angle:180),
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-3,angle:0),
+    ]),
+
+    Formation('Ocean Waves LH GBGB Compact', dancers:[
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-3,angle:0),
     ]),
 
     Formation('Circle', dancers:[
@@ -687,6 +739,7 @@ class Formation {
       Dancer.fromData(gender:Gender.BOY,x:0,y:-3,angle:180),
     ]),
 
+
     Formation('Inverted Lines Ends Facing Out', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:-2,y:3,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:1,angle:0),
@@ -700,6 +753,21 @@ class Formation {
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-1,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:0),
     ]),
+
+    Formation('Inverted Lines Ends Facing Out Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
+    Formation('Inverted Lines Ends Facing In Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
+    ]),
+
 
     Formation('3 and 1 lines #1', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:-2,y:3,angle:180),
@@ -756,6 +824,66 @@ class Formation {
       Dancer.fromData(gender:Gender.BOY,x:-2,y:-1,angle:180),
       Dancer.fromData(gender:Gender.GIRL,x:-2,y:-3,angle:0),
     ]),
+
+    Formation('3 and 1 lines #1 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
+    ]),
+
+    Formation('3 and 1 lines #2 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
+    ]),
+
+    Formation('3 and 1 lines #3 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
+    ]),
+
+    Formation('3 and 1 lines #4 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
+    Formation('3 and 1 lines #5 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
+    Formation('3 and 1 lines #6 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:0),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
+    Formation('3 and 1 lines #7 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:0),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:180),
+    ]),
+
+    Formation('3 and 1 lines #8 Compact', dancers:[
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:3,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:1,angle:180),
+      Dancer.fromData(gender:Gender.BOY,x:-1.5,y:-1,angle:180),
+      Dancer.fromData(gender:Gender.GIRL,x:-1.5,y:-3,angle:0),
+    ]),
+
+
+
+
 
     Formation('Concentric Diamonds RH', dancers:[
       Dancer.fromData(gender:Gender.BOY,x:0,y:3,angle:0),
