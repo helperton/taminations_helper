@@ -28,7 +28,8 @@ import 'package:taminations/beat_notifier.dart';
 import 'package:taminations/sequencer/sequencer_model.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'api_server.dart';
+import 'api_server_stub.dart' if (dart.library.io) 'api_server.dart';
+import 'tam_web_bridge_stub.dart' if (dart.library.html) 'tam_web_bridge.dart';
 import 'common_flutter.dart';
 import 'pages/anim_list_page.dart';
 import 'pages/animation_page.dart';
@@ -137,6 +138,8 @@ void main(List<String> args) async {
   await prefsWithCache.setString('Starting Formation', 'Squared Set');
 
   await tamHelperApiServer.start();
+  tamWebBridge.allowedOrigin = '*'; // set to the Happy Hoppers origin in prod
+  tamWebBridge.start();
 
   final tokenArg = args.firstWhere(
       (arg) => arg.startsWith('--sc-token='), orElse: () => '');
@@ -240,6 +243,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                       pp.ChangeNotifierProvider(create: (context) {
                         final model = SequencerModel(context);
                         tamHelperApiServer.setSequencerModel(model);
+                        tamWebBridge.setSequencerModel(model);
                         return model;
                       }),
                       pp.ChangeNotifierProvider(create: (_) => HighlightState()),
@@ -451,6 +455,7 @@ class TaminationsRouterDelegate extends fm.RouterDelegate<TamState>
           calls: (initialMainPage ?? MainPage.SEQUENCER) == MainPage.SEQUENCER ? '' : null,
         ) {
     tamHelperApiServer.setAppState(appState);
+    tamWebBridge.setAppState(appState);
   }
   var _orientation = fm.Orientation.landscape;
   //  this is necessary for the web URL and back button to work
