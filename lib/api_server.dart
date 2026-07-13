@@ -10,7 +10,12 @@
     POST /reset    — clears the current sequence
     POST /undo     — removes the last N loaded calls
     POST /sequence — loads and animates a sequence
-                     Body: { "formation": "Squared Set", "calls": ["call1", ...] }
+                     Body: { "formation": "Squared Set", "calls": ["call1", ...],
+                             "play": true }
+                     "play" (default false): after loading, rewind to where this batch
+                     began and play the calls through, one after another, so every call
+                     is watchable. Without it only the LAST call is seen animating —
+                     loading a call starts it playing, and the next load cuts it off.
                      Returns: { "ok": true } or
                               { "ok": false, "failingIndex": N, "failingCall": "...", "error": "..." }
 
@@ -134,9 +139,15 @@ class TamHelperApiServer {
     if (request.method == 'GET' && path == 'debug') {
       final windowDebugInfo = await _windowDebugInfoProvider?.call();
       final runtimeBuildInfo = _runtimeBuildInfo();
+      // Live playback position, so a caller can see whether the floor is actually animating
+      // (and from where) rather than parked on the last call.
+      final anim = _sequencerModel?.animation;
       return _jsonOk({
         'debugBuildMarker': debugBuildMarker,
         'runtimeBuildInfo': runtimeBuildInfo,
+        'playing': anim?.beater.isRunning ?? false,
+        'beat': anim == null ? null : (anim.beater.beat * 10).round() / 10.0,
+        'totalBeats': anim == null ? null : (anim.beats * 10).round() / 10.0,
         'authTokenSet': _expectedScToken != null,
         'sequencerModelSet': _sequencerModel != null,
         'appStateSet': _appState != null,
@@ -283,6 +294,7 @@ class TamHelperApiServer {
 
     final formation = (body['formation'] as String?) ?? 'Squared Set';
     final shouldReset = (body['reset'] as bool?) ?? true;
+    final shouldPlayThrough = (body['play'] as bool?) ?? false;
     final rawCalls = body['calls'];
     if (rawCalls == null || rawCalls is! List) {
       return Response(400,
@@ -334,6 +346,10 @@ class TamHelperApiServer {
       }
     }
 
+    // Where this batch starts on the timeline: 0 after a reset, otherwise the end of what
+    // is already loaded. `play` rewinds here so the batch animates from its first call.
+    final batchStartBeat = model.animation.beats;
+
     // Load calls one by one so we can report the exact failure index.
     for (var i = 0; i < calls.length; i++) {
       try {
@@ -361,8 +377,17 @@ class TamHelperApiServer {
       }
     }
 
-    _lastResponseSummary = 'ok — loaded ${calls.length} call(s)';
-    return _jsonOk({'ok': true, 'callCount': calls.length});
+    if (shouldPlayThrough) {
+      // Loading a call leaves it playing from its own start beat, so after the loop only the
+      // LAST call is on screen. Rewind to the batch start and play the whole thing through:
+      // each call animates in turn, and the next begins when the previous finishes.
+      model.animation.goToBeat(batchStartBeat);
+      model.animation.doPlay();
+    }
+
+    _lastResponseSummary =
+        'ok — loaded ${calls.length} call(s)${shouldPlayThrough ? ', playing through' : ''}';
+    return _jsonOk({'ok': true, 'callCount': calls.length, 'playing': shouldPlayThrough});
   }
 
   /// Batch validation: runs an entire call sequence in-process and returns each
