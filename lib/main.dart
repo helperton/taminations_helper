@@ -19,6 +19,7 @@
 */
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart' as fc;
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -152,6 +153,27 @@ void main(List<String> args) async {
   fm.runApp(TaminationsApp(initialDockRequest: SidecarDockRequest.fromLaunchArgs(args)));
 }
 
+///  Desktop: no drag-to-go-back strip down the left edge of the window.
+///
+///  Flutter's default transition on macOS is CupertinoPageTransitionsBuilder, which hangs a
+///  ~20px drag-to-pop gesture on the window's left edge. The sequencer's timeline slider runs the
+///  full width, so with the thumb at the far left, dragging it started the BACK gesture instead of
+///  the slider — the page slid off to the right and the page underneath showed through. Nobody
+///  back-swipes with a mouse, and the title bar has a Back button, so desktop gets a transition
+///  with no edge gesture. The phones keep theirs.
+class TaminationsAppTransitions {
+  static const desktop = fm.PageTransitionsTheme(builders: {
+    //  The phones keep the platform default (Cupertino on iOS carries the edge gesture, which is
+    //  right there). Only the desktops, where the pointer is a mouse, lose it.
+    fm.TargetPlatform.macOS: fm.FadeUpwardsPageTransitionsBuilder(),
+    fm.TargetPlatform.windows: fm.ZoomPageTransitionsBuilder(),
+    fm.TargetPlatform.linux: fm.ZoomPageTransitionsBuilder(),
+    fm.TargetPlatform.iOS: fc.CupertinoPageTransitionsBuilder(),
+    fm.TargetPlatform.android: fm.ZoomPageTransitionsBuilder(),
+    fm.TargetPlatform.fuchsia: fm.ZoomPageTransitionsBuilder(),
+  });
+}
+
 //  TaminationsApp is the top-level widget.
 //  Here it is just a wrapper for the router and its delegate (below),
 //  which does all the work
@@ -172,6 +194,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
   static const sidecarDarkBackground = fm.Color(0xFF000000);
   static const resolverPaneHeight = 360.0; // extra height for the resolve pushout panel (Bottom/Top)
   static const resolverPaneWidth = 380.0; // extra width for the resolve pushout panel (Left/Right)
+
   SidecarDockRequest? _lastDockRequest;
   bool _resolverOpen = false;
   late final TaminationsRouterDelegate _routerDelegate;
@@ -261,6 +284,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                         theme: fm.ThemeData(
                           fontFamily: 'Roboto',
                           brightness: fm.Brightness.light,
+                          pageTransitionsTheme: TaminationsAppTransitions.desktop,
                           textTheme: GoogleFonts.robotoTextTheme(),
                           scrollbarTheme: fm.ScrollbarThemeData(
                             thumbColor:
@@ -270,6 +294,7 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                         darkTheme: fm.ThemeData(
                           fontFamily: 'Roboto',
                           brightness: fm.Brightness.dark,
+                          pageTransitionsTheme: TaminationsAppTransitions.desktop,
                           scaffoldBackgroundColor: sidecarDarkBackground,
                           colorScheme: const fm.ColorScheme.dark(
                             surface: sidecarDarkBackground,
