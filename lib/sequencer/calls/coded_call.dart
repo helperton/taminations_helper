@@ -81,6 +81,7 @@ import 'b1/courtesy_turn.dart';
 import 'b1/dive_thru.dart';
 import 'b1/dosado.dart';
 import 'b1/face.dart';
+import 'b1/face_partner.dart';
 import 'b1/grand_square.dart';
 import 'b1/half_sashay.dart';
 import 'b1/pass_thru.dart';
@@ -474,6 +475,8 @@ abstract class CodedCall extends Call {
     'ExplodetheWave'.ri: (name) => ExplodeTheWave(name),
 
     'Face(In|Out|Left|Right|theCaller)'.ri: (name) => Face(name),
+    //  Face Partner = your ORIGINAL partner. Face Partner of the Moment = whoever you have now.
+    'Face(Your|the)?Partner(of)?(the)?(Moment)?'.ri: (name) => FacePartner(name),
     'Facing'.ri: (name) => FacingDancers(name),
     '(Those|Dancers)?FacingIn'.ri: (name) => FacingIn(name),
     '(Those|Dancers)?FacingOut'.ri: (name) => FacingOut(name),
