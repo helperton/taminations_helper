@@ -109,18 +109,130 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
                 border: fm.Border(top: fm.BorderSide(width: 1, color: borderColor))),
             child: fm.Material(
               color: itemColor,
-              child:
-                  model.isComment(call?.name ?? '#')
-                      ? _OneLine(call?.name ?? '','', isDark)
-                      : fm.InkWell(
-                      highlightColor: levelColor?.darker() ?? Color.WHITE,
-                      onTap: () {
-                        model.animateAtCall(index);
-                      },
-                      child: _OneLine(call?.name ?? '',call?.level?.name ?? '', isDark))
+              //  Right-click (or long-press, for touch) any call to insert around it or delete it.
+              child: fm.GestureDetector(
+                onSecondaryTapDown: (details) =>
+                    _showCallMenu(context, model, index, details.globalPosition),
+                onLongPressStart: (details) =>
+                    _showCallMenu(context, model, index, details.globalPosition),
+                child: model.isComment(call?.name ?? '#')
+                    ? _OneLine(call?.name ?? '','', isDark)
+                    : fm.InkWell(
+                        highlightColor: levelColor?.darker() ?? Color.WHITE,
+                        onTap: () {
+                          model.animateAtCall(index);
+                        },
+                        child: _OneLine(call?.name ?? '',call?.level?.name ?? '', isDark)),
+              )
             )
           );
         });
+  }
+
+  Future<void> _showCallMenu(fm.BuildContext context, SequencerModel model,
+      int index, fm.Offset position) async {
+    final overlay =
+        fm.Overlay.of(context).context.findRenderObject() as fm.RenderBox;
+    final choice = await fm.showMenu<String>(
+      context: context,
+      position: fm.RelativeRect.fromRect(
+          position & const fm.Size(1, 1), fm.Offset.zero & overlay.size),
+      items: const [
+        fm.PopupMenuItem(value: 'above', child: fm.Text('Insert Call Above…')),
+        fm.PopupMenuItem(value: 'below', child: fm.Text('Insert Call Below…')),
+        fm.PopupMenuDivider(),
+        fm.PopupMenuItem(value: 'delete', child: fm.Text('Delete Call')),
+      ],
+    );
+    if (choice == null || !context.mounted) {
+      return;
+    }
+    switch (choice) {
+      case 'above':
+        await _insertCall(context, model, index);
+      case 'below':
+        await _insertCall(context, model, index + 1);
+      case 'delete':
+        _deleteCall(context, model, index);
+    }
+  }
+
+  Future<void> _insertCall(
+      fm.BuildContext context, SequencerModel model, int at) async {
+    final controller = fm.TextEditingController();
+    final entered = await fm.showDialog<String>(
+        context: context,
+        builder: (ctx) => fm.AlertDialog(
+              title: fm.Text(at == 0 ? 'Insert Call at the Top' : 'Insert Call'),
+              content: fm.TextField(
+                controller: controller,
+                autofocus: true,
+                style: fm.TextStyle(fontSize: 24),
+                decoration: fm.InputDecoration(hintText: 'Enter a call'),
+                onSubmitted: (value) => fm.Navigator.of(ctx).pop(value),
+              ),
+              actions: [
+                fm.TextButton(
+                    onPressed: () => fm.Navigator.of(ctx).pop(),
+                    child: fm.Text('Cancel')),
+                fm.TextButton(
+                    onPressed: () => fm.Navigator.of(ctx).pop(controller.text),
+                    child: fm.Text('Insert')),
+              ],
+            ));
+    if (entered == null || entered.isBlank || !context.mounted) {
+      return;
+    }
+
+    final previous = model.callNames;
+    final failed = model.insertCallAt(at, entered);
+    if (!context.mounted) {
+      return;
+    }
+    if (failed != null) {
+      //  Either the new call doesn't work here, or it works but breaks a later one.
+      _snack(
+          context,
+          failed.trim().toLowerCase() == entered.trim().toLowerCase()
+              ? 'Cannot insert "${entered.trim()}" there. Sequence unchanged.'
+              : 'Inserting "${entered.trim()}" there breaks "$failed". Sequence unchanged.',
+          Color.RED);
+      return;
+    }
+    _snack(context, 'Inserted "${entered.trim()}".', Color.BLUE,
+        undo: () => model.rebuildSequence(previous));
+  }
+
+  void _deleteCall(fm.BuildContext context, SequencerModel model, int index) {
+    if (index < 0 || index >= model.calls.length) {
+      return;
+    }
+    final removed = model.calls[index].name;
+    final previous = model.callNames;
+    final failed = model.deleteCallAt(index);
+    if (failed != null) {
+      _snack(
+          context,
+          'Cannot delete "$removed" — "$failed" no longer works without it. '
+              'Sequence unchanged.',
+          Color.RED);
+      return;
+    }
+    _snack(context, 'Deleted "$removed".', Color.BLUE,
+        undo: () => model.rebuildSequence(previous));
+  }
+
+  void _snack(fm.BuildContext context, String message, Color background,
+      {void Function()? undo}) {
+    fm.ScaffoldMessenger.of(context).showSnackBar(fm.SnackBar(
+      backgroundColor: background,
+      duration: Duration(seconds: undo == null ? 4 : 6),
+      content: fm.Text(message, style: GoogleFonts.roboto(fontSize: 20)),
+      action: undo == null
+          ? null
+          : fm.SnackBarAction(
+              label: 'Undo', textColor: Color.WHITE, onPressed: undo),
+    ));
   }
 
 }

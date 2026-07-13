@@ -324,6 +324,73 @@ class SequencerModel extends fm.ChangeNotifier {
       undoReset();
   }
 
+  //  Mid-sequence editing (insert / delete a call at any position).
+  //
+  //  A call is interpreted against the formation the call before it left behind, so
+  //  editing anywhere but the end means re-running everything from the start. The edit
+  //  can legitimately fail — drop the call that set up a wave and the next call may have
+  //  nothing to work with — so a failed rebuild changes nothing: the previous sequence is
+  //  restored and the offending call is returned for the caller to report.
+
+  List<String> get callNames => calls.map((call) => call.name).toList();
+
+  /// Rebuilds the sequence from the starting formation with [newCallNames].
+  /// Returns null on success, or the name of the call that failed — in which case the
+  /// sequence is left exactly as it was.
+  String? rebuildSequence(List<String> newCallNames) {
+    final previous = callNames;
+    final failed = _reloadAll(newCallNames);
+    if (failed != null) {
+      _reloadAll(previous);
+    }
+    return failed;
+  }
+
+  /// Inserts [call] so that it lands at [index]. Index 0 puts it at the top; an index at
+  /// or past the end appends it.
+  String? insertCallAt(int index, String call) {
+    final names = callNames;
+    names.insert(index.clamp(0, names.length), call);
+    return rebuildSequence(names);
+  }
+
+  String? deleteCallAt(int index) {
+    if (index < 0 || index >= calls.length) {
+      return null;
+    }
+    final names = callNames;
+    names.removeAt(index);
+    return rebuildSequence(names);
+  }
+
+  /// Starts over from the starting formation and loads [newCallNames] in order.
+  /// Returns the first call that failed, leaving the partial sequence behind — callers
+  /// are expected to reload a known-good list on failure.
+  String? _reloadAll(List<String> newCallNames) {
+    animation.doPause();
+    calls = [];
+    currentCall = -1;
+    errorString = '';
+    lastFailedCall = null;
+    _startSequence();
+    animateFrom = 0.0;
+    for (final name in newCallNames) {
+      if (!loadOneCall(name)) {
+        return name;
+      }
+    }
+    _updateParts();
+    animation.recalculate();
+    animation.goToEnd();
+    //  Loading a call leaves it playing; the sequence was edited, not called, so sit still.
+    animation.doPause();
+    errorString = '';
+    later(() {
+      notifyListeners();
+    });
+    return null;
+  }
+
   CallContext contextFromAnimation() {
     final formationName = _validFormationName(startingFormation);
     _startingFormation = formationName;
