@@ -48,6 +48,28 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
 
+  //  Outcome of the last insert/delete. Shown as a banner INSIDE the column — a SnackBar would
+  //  float over the Undo/Resolve/Reset/Copy/Paste row at the bottom of the panel and block it.
+  String? _editMessage;
+  bool _editFailed = false;
+  void Function()? _editUndo;
+
+  void _report(String message, {bool failed = false, void Function()? undo}) {
+    setState(() {
+      _editMessage = message;
+      _editFailed = failed;
+      _editUndo = undo;
+    });
+  }
+
+  void _clearReport() {
+    setState(() {
+      _editMessage = null;
+      _editFailed = false;
+      _editUndo = null;
+    });
+  }
+
   @override
   fm.Widget build(fm.BuildContext context) {
     return pp.Consumer2<SequencerModel, DanceThemeTuning>(
@@ -58,6 +80,7 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
              builder: (context,constraints) => fm.Column(
                children: [
                  SequencerEditLine(),
+                 if (_editMessage != null) _editBanner(),
                  if (!isSmallAndCompact(context))
                    fm.Expanded(
                        child: fm.Container(
@@ -76,6 +99,43 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
              ),
            );
          },
+    );
+  }
+
+  /// The insert/delete outcome, as a row in the column rather than an overlay, so it never
+  /// covers the buttons below it. Carries its own Undo, and stays until dismissed.
+  fm.Widget _editBanner() {
+    final undo = _editUndo;
+    return fm.Material(
+      color: _editFailed ? Color.RED : Color.BLUE,
+      child: fm.Padding(
+        padding: fm.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: fm.Row(
+          children: [
+            fm.Expanded(
+              child: fm.Text(_editMessage ?? '',
+                  style: GoogleFonts.roboto(fontSize: 16, color: Color.WHITE)),
+            ),
+            if (undo != null)
+              fm.TextButton(
+                onPressed: () {
+                  undo();
+                  _clearReport();
+                },
+                child: fm.Text('Undo',
+                    style: GoogleFonts.roboto(
+                        fontSize: 16,
+                        color: Color.WHITE,
+                        fontWeight: fm.FontWeight.bold)),
+              ),
+            fm.IconButton(
+              icon: fm.Icon(fm.Icons.close, size: 18, color: Color.WHITE),
+              tooltip: 'Dismiss',
+              onPressed: _clearReport,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -191,15 +251,14 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
     }
     if (failed != null) {
       //  Either the new call doesn't work here, or it works but breaks a later one.
-      _snack(
-          context,
+      _report(
           failed.trim().toLowerCase() == entered.trim().toLowerCase()
               ? 'Cannot insert "${entered.trim()}" there. Sequence unchanged.'
               : 'Inserting "${entered.trim()}" there breaks "$failed". Sequence unchanged.',
-          Color.RED);
+          failed: true);
       return;
     }
-    _snack(context, 'Inserted "${entered.trim()}".', Color.BLUE,
+    _report('Inserted "${entered.trim()}".',
         undo: () => model.rebuildSequence(previous));
   }
 
@@ -211,28 +270,14 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
     final previous = model.callNames;
     final failed = model.deleteCallAt(index);
     if (failed != null) {
-      _snack(
-          context,
+      _report(
           'Cannot delete "$removed" — "$failed" no longer works without it. '
               'Sequence unchanged.',
-          Color.RED);
+          failed: true);
       return;
     }
-    _snack(context, 'Deleted "$removed".', Color.BLUE,
+    _report('Deleted "$removed".',
         undo: () => model.rebuildSequence(previous));
-  }
-
-  void _snack(fm.BuildContext context, String message, Color background,
-      {void Function()? undo}) {
-    fm.ScaffoldMessenger.of(context).showSnackBar(fm.SnackBar(
-      backgroundColor: background,
-      duration: Duration(seconds: undo == null ? 4 : 6),
-      content: fm.Text(message, style: GoogleFonts.roboto(fontSize: 20)),
-      action: undo == null
-          ? null
-          : fm.SnackBarAction(
-              label: 'Undo', textColor: Color.WHITE, onPressed: undo),
-    ));
   }
 
 }
