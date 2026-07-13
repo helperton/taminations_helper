@@ -582,6 +582,8 @@ abstract class CodedCall extends Call {
     'Promenade(Home)?Short'.ri: (name) => PromenadeHome(name),
     'Promenade(Home)?'.ri: (name) => PromenadeHome(name),
     'Swing(Your)?Corner(and)?Promenade(Home)?'.ri: (name) => PromenadeHome(name),
+    //  The other way a singing call ends: swing the one you already have.
+    'Swing(Your)?Partner(and)?Promenade(Home)?'.ri: (name) => PromenadeHome(name),
     'Promenade(Home)?(With)?(Your)?Corner'.ri: (name) => PromenadeHome(name),
     '(Right)?PullBy'.ri: (name) => PullBy(name),
 

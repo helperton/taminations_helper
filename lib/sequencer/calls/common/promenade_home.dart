@@ -31,14 +31,21 @@ import '../../call_context.dart';
 import '../../call_error.dart';
 import '../action.dart';
 
-//  This covers both Promenade Home and
-//  Swing Your Corner And Promenade
+//  This covers Promenade Home and both ways a singing call ends:
+//  Swing Your Corner And Promenade, and Swing Your Partner And Promenade.
+//
+//  Corner and Partner are the SAME call but for who the girls end up with: for the corner each
+//  girl moves on to the next couple (numberCouple % 4 + 1), for the partner she stays with the one
+//  she has. Everything else — the axis snap, the in-sequence check, the swing, the promenade
+//  home — is common to both.
 class PromenadeHome extends Action {
 
   @override var help = '''If all the dancers are in sequence and near their partner, you can
 Promenade Home
 You can also finish a singing call sequence with
 Swing Corner and Promenade
+or
+Swing Partner and Promenade
 Or, skip the Swing with
 Promenade Corner''';
   @override var helplink = 'b1/promenade';
@@ -61,7 +68,7 @@ Promenade Corner''';
       ctx.level = LevelData.B1;
       return;
     }
-    if (!name.endsWith('Home') && !name.contains('Corner'))
+    if (!name.endsWith('Home') && !name.contains('Corner') && !name.contains('Partner'))
       throw CallError('Use either Promenade Home or Promenade <fraction>');
     if (ctx.dancers.length != 8)
       throw CallError('Only for 4 couples at this point.');
@@ -133,7 +140,7 @@ Promenade Corner''';
     var startLocation = startCouple * (d.gender == Gender.BOY ? 1.0 : 1.5);
     var startAngle = startCouple.angle + pi/2;
     var extraMoves = Path();
-    if (name.contains('Corner') && name.contains('Swing')) {
+    if (name.contains('Swing') && (name.contains('Corner') || name.contains('Partner'))) {
       startAngle = d.gender == Gender.BOY
           ? startCouple.angle
           : startCouple.angle + pi;
