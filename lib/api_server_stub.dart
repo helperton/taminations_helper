@@ -7,18 +7,43 @@
 // with TamHelperApiServer so both libraries satisfy main.dart's call sites.
 //
 // Methods main.dart calls: start, setSequencerModel, setAppState, setExpectedToken,
-// setDockWindowHandler, setWindowDebugInfoProvider.
+// setDockWindowHandler, setWindowDebugInfoProvider, setPort.
+//
+// Branching (the experimental splice) is a desktop affair — it opens a second TamHelper process —
+// so on web there is never a branch: branchInfo stays null and its UI never shows.
 
+import 'branch.dart';
 import 'sequencer/sequencer_model.dart';
 import 'tam_state.dart';
 
 class TamHelperApiServer {
+  static const defaultPort = 7234;
+
+  int port = defaultPort;
+  BranchInfo? branchInfo;
+
   Future<void> start() async {}
+  void setPort(int value) {}
   void setSequencerModel(SequencerModel model) {}
   void setAppState(TamState state) {}
   void setExpectedToken(dynamic token) {}
   void setDockWindowHandler(dynamic handler) {}
   void setWindowDebugInfoProvider(dynamic provider) {}
+
+  Future<int> launchBranch({
+    required List<String> calls,
+    required String formation,
+    required String parentName,
+  }) async =>
+      throw 'Branching a sequence needs the desktop app.';
+
+  void closeBranchWindow() {}
+
+  Future<SpliceOutcome> spliceIntoParent({
+    required List<String> branchCalls,
+    required bool replaceTail,
+  }) async =>
+      const SpliceOutcome(ok: false, error: 'Branching a sequence needs the desktop app.');
 }
 
 final tamHelperApiServer = TamHelperApiServer();

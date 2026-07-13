@@ -28,6 +28,8 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_to_text_provider.dart';
 
+import '../api_server_stub.dart' if (dart.library.io) '../api_server.dart';
+import '../branch.dart';
 import '../common_flutter.dart';
 import '../dance_painter.dart';
 import '../pages/calls_page.dart';
@@ -79,6 +81,8 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
            return fm.LayoutBuilder(
              builder: (context,constraints) => fm.Column(
                children: [
+                 //  A branched TamHelper says so, and offers the way home.
+                 if (tamHelperApiServer.branchInfo != null) _branchBanner(context, model),
                  SequencerEditLine(),
                  if (_editMessage != null) _editBanner(),
                  if (!isSmallAndCompact(context))
@@ -99,6 +103,115 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
              ),
            );
          },
+    );
+  }
+
+  /// The header of a branched TamHelper: where it came from, and the way home.
+  fm.Widget _branchBanner(fm.BuildContext context, SequencerModel model) {
+    final branch = tamHelperApiServer.branchInfo!;
+    return fm.Material(
+      color: const fm.Color(0xFF4A148C),
+      child: fm.Padding(
+        padding: fm.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: fm.Row(
+          children: [
+            fm.Icon(fm.Icons.call_split, size: 18, color: Color.WHITE),
+            fm.SizedBox(width: 8),
+            fm.Expanded(
+              child: fm.Text(branch.label,
+                  style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      color: Color.WHITE,
+                      fontWeight: fm.FontWeight.bold)),
+            ),
+            fm.TextButton(
+              onPressed: () => _spliceIntoParent(context, model),
+              child: fm.Text('Splice into Parent',
+                  style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      color: Color.WHITE,
+                      fontWeight: fm.FontWeight.bold)),
+            ),
+            fm.TextButton(
+              onPressed: () => tamHelperApiServer.closeBranchWindow(),
+              child: fm.Text('Discard',
+                  style: GoogleFonts.roboto(fontSize: 16, color: Color.WHITE)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Takes this branch home. The parent keeps the calls that came AFTER the branch point and
+  /// re-runs them; when one of them no longer works, nothing changes there and we offer to
+  /// replace them with what the branch became.
+  Future<void> _spliceIntoParent(fm.BuildContext context, SequencerModel model) async {
+    final branch = tamHelperApiServer.branchInfo!;
+    final calls = model.callNames;
+    _report('Splicing into ${branch.parentName}…');
+
+    var outcome = await tamHelperApiServer.spliceIntoParent(
+        branchCalls: calls, replaceTail: false);
+    if (!context.mounted) {
+      return;
+    }
+
+    if (!outcome.ok && outcome.canRetryByReplacingTail) {
+      final replace = await _confirmReplaceTail(context, branch.parentName, outcome);
+      if (replace != true || !context.mounted) {
+        _report('${branch.parentName} was left alone.');
+        return;
+      }
+      outcome = await tamHelperApiServer.spliceIntoParent(
+          branchCalls: calls, replaceTail: true);
+      if (!context.mounted) {
+        return;
+      }
+    }
+
+    if (outcome.ok) {
+      _report('Spliced ${calls.length} call(s) into ${branch.parentName}.');
+    } else {
+      _report(outcome.error ?? 'The splice did not take.', failed: true);
+    }
+  }
+
+  Future<bool?> _confirmReplaceTail(
+      fm.BuildContext context, String parentName, SpliceOutcome outcome) {
+    return fm.showDialog<bool>(
+      context: context,
+      builder: (ctx) => fm.AlertDialog(
+        title: fm.Text('Splice into $parentName?'),
+        content: fm.Column(
+          mainAxisSize: fm.MainAxisSize.min,
+          crossAxisAlignment: fm.CrossAxisAlignment.start,
+          children: [
+            fm.Text(
+                'These calls in $parentName no longer work after the branch:',
+                style: fm.TextStyle(fontSize: 16)),
+            fm.SizedBox(height: 8),
+            for (final call in outcome.brokenTail)
+              fm.Text('   •  $call',
+                  style: fm.TextStyle(
+                      fontSize: 16,
+                      fontWeight: call == outcome.failingCall
+                          ? fm.FontWeight.bold
+                          : fm.FontWeight.normal)),
+            fm.SizedBox(height: 12),
+            fm.Text('Replace everything after the branch point with this sequence?',
+                style: fm.TextStyle(fontSize: 16)),
+          ],
+        ),
+        actions: [
+          fm.TextButton(
+              onPressed: () => fm.Navigator.of(ctx).pop(false),
+              child: fm.Text('Cancel')),
+          fm.TextButton(
+              onPressed: () => fm.Navigator.of(ctx).pop(true),
+              child: fm.Text('Replace Everything After')),
+        ],
+      ),
     );
   }
 
@@ -201,6 +314,9 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
         fm.PopupMenuItem(value: 'above', child: fm.Text('Insert Call Above…')),
         fm.PopupMenuItem(value: 'below', child: fm.Text('Insert Call Below…')),
         fm.PopupMenuDivider(),
+        fm.PopupMenuItem(
+            value: 'branch', child: fm.Text('Branch from Here (Experimental Splice)')),
+        fm.PopupMenuDivider(),
         fm.PopupMenuItem(value: 'delete', child: fm.Text('Delete Call')),
       ],
     );
@@ -212,8 +328,34 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
         await _insertCall(context, model, index);
       case 'below':
         await _insertCall(context, model, index + 1);
+      case 'branch':
+        await _branchFromHere(context, model, index);
       case 'delete':
         _deleteCall(context, model, index);
+    }
+  }
+
+  /// Opens a SECOND TamHelper carrying the sequence up to and including this call, so you can try
+  /// something else without disturbing the one you're in. See branch.dart.
+  Future<void> _branchFromHere(
+      fm.BuildContext context, SequencerModel model, int index) async {
+    if (index < 0 || index >= model.calls.length) {
+      return;
+    }
+    final calls = model.callNames.take(index + 1).toList();
+    final from = model.calls[index].name;
+    _report('Opening a branch from "$from"…');
+
+    try {
+      await tamHelperApiServer.launchBranch(
+        calls: calls,
+        formation: model.startingFormation,
+        parentName: tamHelperDisplayName(tamHelperApiServer.branchInfo),
+      );
+      _report('Branch opened with ${calls.length} call(s), through "$from". '
+          'Try something there, then Splice into Parent to bring it back.');
+    } catch (e) {
+      _report('$e', failed: true);
     }
   }
 

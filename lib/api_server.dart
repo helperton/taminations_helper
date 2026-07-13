@@ -9,6 +9,8 @@
     GET  /state    — current dancer state: positions, facing, formation, call history
     POST /reset    — clears the current sequence
     POST /undo     — removes the last N loaded calls
+    POST /splice   — a branched TamHelper coming home (see branch.dart)
+                     Body: { "seedCount": N, "calls": [...], "replaceTail": false }
     POST /sequence — loads and animates a sequence
                      Body: { "formation": "Squared Set", "calls": ["call1", ...],
                              "play": true }
@@ -28,13 +30,25 @@ import 'dart:math';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
+import 'branch.dart';
 import 'dancer.dart';
 import 'sequencer/sequencer_model.dart';
 import 'tam_state.dart';
 
 class TamHelperApiServer {
-  static const port = 7234;
+  /// The port SquareCraft talks to. The FIRST TamHelper keeps it; a branch (see branch.dart) is
+  /// given its own with --api-port, so several can run at once without fighting over this one.
+  static const defaultPort = 7234;
   static const debugBuildMarker = 'validate-2';
+
+  int port = defaultPort;
+
+  /// Where this TamHelper was branched from, if it was. Set from the launch args in main().
+  BranchInfo? branchInfo;
+
+  void setPort(int value) {
+    port = value;
+  }
 
   SequencerModel? _sequencerModel;
   TamState? _appState;
@@ -97,6 +111,137 @@ class TamHelperApiServer {
     _server = await shelf_io.serve(handler, 'localhost', port);
     // ignore: avoid_print
     print('[TamHelper] API server listening on localhost:$port');
+  }
+
+  // MARK: - Experimental splice: branching (see branch.dart)
+
+  /// Opens a SECOND TamHelper, seeded with `calls` — the sequence up to and including the call
+  /// that was right-clicked. It is a whole separate process with its own window and its own API
+  /// port, so several branches can be open at once and sit side by side.
+  ///
+  /// Returns the branch's port, or throws with a reason the caller can show.
+  Future<int> launchBranch({
+    required List<String> calls,
+    required String formation,
+    required String parentName,
+  }) async {
+    //  Let the OS name a free port rather than guessing at one.
+    final probe = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final childPort = probe.port;
+    await probe.close();
+
+    final args = <String>[
+      '${BranchInfo.apiPortArg}$childPort',
+      '${BranchInfo.parentPortArg}$port',
+      '${BranchInfo.parentNameArg}$parentName',
+      '${BranchInfo.seedCountArg}${calls.length}',
+      //  The branch has to authenticate to us to splice back, and SquareCraft may want to talk to
+      //  it too — so it inherits our token.
+      if (_expectedScToken != null && _expectedScToken!.isNotEmpty)
+        '--sc-token=$_expectedScToken',
+    ];
+
+    await Process.start(
+      Platform.resolvedExecutable,
+      args,
+      mode: ProcessStartMode.detached,
+    );
+
+    //  Wait for the new window's API to answer, then push the calls into it. Seeding over the API
+    //  we already serve beats trying to squeeze a whole sequence through the command line.
+    final deadline = DateTime.now().add(const Duration(seconds: 30));
+    while (DateTime.now().isBefore(deadline)) {
+      final status = await _get(childPort, '/status');
+      if (status != null && status['ready'] == true) {
+        final seeded = await _post(childPort, '/sequence', {
+          'formation': formation,
+          'calls': calls,
+          'reset': true,
+          'play': false,
+        });
+        if (seeded != null && seeded['ok'] == true) {
+          return childPort;
+        }
+        throw 'The branch opened but would not take the calls: ${seeded?['error'] ?? 'no answer'}';
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+    throw 'The branch did not come up within 30 seconds.';
+  }
+
+  /// Splices this branch's sequence back into the TamHelper it came from.
+  ///
+  /// `replaceTail: false` first tries to keep the parent's calls that came AFTER the branch point
+  /// and re-run them; if one of them no longer works, nothing changes and the failure comes back so
+  /// the caller can offer to replace them instead.
+  Future<SpliceOutcome> spliceIntoParent({
+    required List<String> branchCalls,
+    required bool replaceTail,
+  }) async {
+    final branch = branchInfo;
+    if (branch == null) {
+      return SpliceOutcome(ok: false, error: 'This TamHelper is not a branch of another.');
+    }
+    final answer = await _post(branch.parentPort, '/splice', {
+      'seedCount': branch.seedCount,
+      'calls': branchCalls,
+      'replaceTail': replaceTail,
+    });
+    if (answer == null) {
+      return SpliceOutcome(
+          ok: false, error: 'The parent TamHelper did not answer — is it still open?');
+    }
+    return SpliceOutcome(
+      ok: answer['ok'] == true,
+      error: answer['error'] as String?,
+      failingCall: answer['failingCall'] as String?,
+      brokenTail: (answer['brokenTail'] as List?)?.cast<String>() ?? const [],
+    );
+  }
+
+  /// Shuts this branch's window. Discarding an experiment should take the whole window with it.
+  void closeBranchWindow() {
+    exit(0);
+  }
+
+  Future<Map<String, dynamic>?> _get(int onPort, String path) async {
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(Uri.parse('http://localhost:$onPort$path'));
+      _authorize(request);
+      final response = await request.close();
+      final body = await response.transform(const Utf8Decoder()).join();
+      return jsonDecode(body) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<Map<String, dynamic>?> _post(
+      int onPort, String path, Map<String, dynamic> body) async {
+    final client = HttpClient();
+    try {
+      final request = await client.postUrl(Uri.parse('http://localhost:$onPort$path'));
+      request.headers.contentType = ContentType.json;
+      _authorize(request);
+      request.write(jsonEncode(body));
+      final response = await request.close();
+      final text = await response.transform(const Utf8Decoder()).join();
+      return jsonDecode(text) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    } finally {
+      client.close();
+    }
+  }
+
+  void _authorize(HttpClientRequest request) {
+    final token = _expectedScToken;
+    if (token != null && token.isNotEmpty) {
+      request.headers.set('x-sc-token', token);
+    }
   }
 
   Future<void> stop() async {
@@ -172,6 +317,10 @@ class TamHelperApiServer {
 
     if (request.method == 'POST' && path == 'undo') {
       return await _handleUndo(request);
+    }
+
+    if (request.method == 'POST' && path == 'splice') {
+      return _handleSplice(request);
     }
 
     if (request.method == 'POST' && path == 'sequence') {
@@ -280,6 +429,94 @@ class TamHelperApiServer {
       model.undoLastCall();
     }
     return _jsonOk({'ok': true, 'undone': count});
+  }
+
+  /// A branch coming home. Body: { seedCount, calls (the branch's WHOLE sequence), replaceTail }.
+  ///
+  /// The branch already carries our first `seedCount` calls, so it replaces them. What's at stake
+  /// is our TAIL — the calls after the branch point. We re-run them after the branch's; if one no
+  /// longer works we change NOTHING and name it, so the branch can offer to drop them instead.
+  Future<Response> _handleSplice(Request request) async {
+    final model = _sequencerModel;
+    if (model == null) {
+      return _jsonOk({'ok': false, 'error': 'sequencer not ready'});
+    }
+
+    final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    } catch (_) {
+      return Response(400,
+          body: jsonEncode({'error': 'invalid JSON body'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+
+    final seedCount = (body['seedCount'] as num?)?.toInt();
+    final rawCalls = body['calls'];
+    if (seedCount == null || seedCount < 0 || rawCalls is! List) {
+      return Response(400,
+          body: jsonEncode({'error': '"seedCount" (int) and "calls" (array) are required'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+    final branchCalls = rawCalls.cast<String>();
+    final replaceTail = (body['replaceTail'] as bool?) ?? false;
+
+    final parentCalls = model.callNames;
+    final tail = parentTail(parentCalls: parentCalls, seedCount: seedCount);
+
+    final failed = model.rebuildSequence(splicedSequence(
+      parentCalls: parentCalls,
+      branchCalls: branchCalls,
+      seedCount: seedCount,
+      replaceTail: replaceTail,
+    ));
+
+    if (failed == null) {
+      _lastResponseSummary =
+          'spliced ${branchCalls.length} call(s)${replaceTail ? ', tail replaced' : ''}';
+      return _jsonOk({
+        'ok': true,
+        'callCount': model.calls.length,
+        'replacedTail': replaceTail,
+      });
+    }
+
+    //  It didn't take, and rebuildSequence left us exactly as we were. Now: WHOSE fault was it?
+    //  Only a failure in our TAIL can be fixed by dropping the tail. If the branch itself doesn't
+    //  dance, offering to "replace everything after" would be a lie — it would fail again.
+    _lastError = failed;
+
+    if (!replaceTail && _sequenceDances(model, branchCalls, restoringTo: parentCalls)) {
+      _lastResponseSummary = 'splice refused — "$failed" no longer works after the branch';
+      return _jsonOk({
+        'ok': false,
+        'failingCall': failed,
+        //  What we would have to drop for this branch to land.
+        'brokenTail': tail,
+        'error': '"$failed" no longer works after the branch.',
+      });
+    }
+
+    _lastResponseSummary = 'splice refused — the branch itself does not dance ("$failed")';
+    return _jsonOk({
+      'ok': false,
+      'failingCall': failed,
+      'brokenTail': <String>[],
+      'error': 'The branch itself does not dance: "$failed".',
+    });
+  }
+
+  /// Would `calls` dance on their own? Leaves the model holding `restoringTo` either way — this is
+  /// a question, not an edit.
+  bool _sequenceDances(SequencerModel model, List<String> calls, {required List<String> restoringTo}) {
+    final failed = model.rebuildSequence(List<String>.from(calls));
+    if (failed == null) {
+      //  They danced, so the model is now holding THEM. Put the sequence back.
+      model.rebuildSequence(restoringTo);
+      return true;
+    }
+    //  They didn't, so rebuildSequence already restored what was there.
+    return false;
   }
 
   Future<Response> _handleSequence(Request request) async {

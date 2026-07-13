@@ -30,6 +30,7 @@ import 'package:taminations/sequencer/sequencer_model.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'api_server_stub.dart' if (dart.library.io) 'api_server.dart';
+import 'branch.dart';
 import 'tam_web_bridge_stub.dart' if (dart.library.html) 'tam_web_bridge.dart';
 import 'common_flutter.dart';
 import 'pages/anim_list_page.dart';
@@ -137,6 +138,15 @@ void main(List<String> args) async {
   final prefsWithCache = await SharedPreferencesWithCache.create(
       cacheOptions: SharedPreferencesWithCacheOptions());
   await prefsWithCache.setString('Starting Formation', 'Squared Set');
+
+  //  A branched TamHelper (see branch.dart) serves on its own port and remembers the one it came
+  //  from, so the first TamHelper keeps 7234 — the port SquareCraft talks to — and several
+  //  branches can be open at once.
+  final apiPort = BranchInfo.apiPortFromLaunchArgs(args);
+  if (apiPort != null) {
+    tamHelperApiServer.setPort(apiPort);
+  }
+  tamHelperApiServer.branchInfo = BranchInfo.fromLaunchArgs(args);
 
   await tamHelperApiServer.start();
   tamWebBridge.allowedOrigin = '*'; // set to the Happy Hoppers origin in prod
