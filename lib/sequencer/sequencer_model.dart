@@ -363,6 +363,17 @@ class SequencerModel extends fm.ChangeNotifier {
     return rebuildSequence(names);
   }
 
+  /// Rewrites the call at [index] in place. Like any mid-sequence edit this re-runs everything
+  /// after it, so it can be refused — and then nothing changes.
+  String? replaceCallAt(int index, String call) {
+    if (index < 0 || index >= calls.length) {
+      return null;
+    }
+    final names = callNames;
+    names[index] = call;
+    return rebuildSequence(names);
+  }
+
   /// Starts over from the starting formation and loads [newCallNames] in order.
   /// Returns the first call that failed, leaving the partial sequence behind — callers
   /// are expected to reload a known-good list on failure.
@@ -443,9 +454,13 @@ class SequencerModel extends fm.ChangeNotifier {
     //  once all interpretation is done
     //  Will be reset to 0 if 'reset' is part of the line
     animateFrom = animation.beats;
-    //  If call now has multiple lines (separated by semi-colons)
-    //  run each one separately
-    for (var oneCall in line.split(';'))
+    //  If call now has multiple calls, run each one separately.
+    //
+    //  NEWLINES count, not just semi-colons: Copy joins the calls with whatever
+    //  Settings.joinCallsWith says, and that defaults to a newline. Splitting on ';' alone meant
+    //  a copied sequence pasted straight back into the input line came in as ONE enormous call —
+    //  the newlines were simply ignored. Whatever Copy produces, paste it back and it is taken.
+    for (var oneCall in line.split('[\n;]'.r))
       _interpretOneCall(oneCall);
   }
 

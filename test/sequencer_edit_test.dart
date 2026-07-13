@@ -152,6 +152,65 @@ Double Pass Thru''');
     });
   });
 
+  testWidgets('edit rewrites a call in place and re-runs the rest', (tester) async {
+    await tester.runAsync(() async {
+      final model = await sequence('''Heads Square Thru
+Swing Thru
+Boys Run''');
+
+      final failed = model.replaceCallAt(1, 'Swing Thru');   //  same call, different text path
+      expect(failed, isNull);
+
+      //  Now a real change: Boys Run still has to work after it.
+      final changed = model.replaceCallAt(2, 'Girls Run');
+      expect(changed, isNull);
+      expect(model.callNames, ['Heads Square Thru', 'Swing Thru', 'Girls Run']);
+    });
+  });
+
+  testWidgets('an edit the floor cannot dance is refused, sequence unchanged', (tester) async {
+    await tester.runAsync(() async {
+      final model = await sequence('''Heads Star Thru
+Double Pass Thru''');
+      final before = model.callNames;
+
+      //  Nothing to extend from a squared set.
+      final failed = model.replaceCallAt(0, 'Extend');
+
+      expect(failed, isNotNull);
+      expect(model.callNames, before, reason: 'a refused edit must change nothing');
+    });
+  });
+
+  //  Copy joins the calls with newlines (Settings.joinCallsWith defaults to 'New Line'). Paste it
+  //  back into the sequencer's input line and it has to come apart again — before, the input line
+  //  split on ';' only, so the whole copy arrived as ONE enormous call.
+  testWidgets('a copied sequence pastes straight back into the input line', (tester) async {
+    await tester.runAsync(() async {
+      Settings.mockInit();
+      final model = SequencerModel();
+      model.setStartingFormation('Static Square');
+
+      const copied = 'Heads Square Thru\nSwing Thru\nBoys Run';
+      expect(model.loadOneCall(copied), isTrue);
+      model.animation.doPause();   //  loading a call starts it playing; park it for the test
+
+      expect(model.callNames, ['Heads Square Thru', 'Swing Thru', 'Boys Run']);
+    });
+  });
+
+  testWidgets('semi-colons still separate calls on one line', (tester) async {
+    await tester.runAsync(() async {
+      Settings.mockInit();
+      final model = SequencerModel();
+      model.setStartingFormation('Static Square');
+
+      expect(model.loadOneCall('Heads Square Thru; Swing Thru'), isTrue);
+      model.animation.doPause();
+      expect(model.callNames, ['Heads Square Thru', 'Swing Thru']);
+    });
+  });
+
   testWidgets('rebuildSequence restores a previous sequence (the Undo path)', (tester) async {
     await tester.runAsync(() async {
       final model = await sequence('''Heads Star Thru

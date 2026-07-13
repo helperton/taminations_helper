@@ -311,6 +311,8 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
       position: fm.RelativeRect.fromRect(
           position & const fm.Size(1, 1), fm.Offset.zero & overlay.size),
       items: const [
+        fm.PopupMenuItem(value: 'edit', child: fm.Text('Edit Call…')),
+        fm.PopupMenuDivider(),
         fm.PopupMenuItem(value: 'above', child: fm.Text('Insert Call Above…')),
         fm.PopupMenuItem(value: 'below', child: fm.Text('Insert Call Below…')),
         fm.PopupMenuDivider(),
@@ -324,6 +326,8 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
       return;
     }
     switch (choice) {
+      case 'edit':
+        await _editCall(context, model, index);
       case 'above':
         await _insertCall(context, model, index);
       case 'below':
@@ -333,6 +337,61 @@ class _SequenceFrameState extends fm.State<SequenceFrame> {
       case 'delete':
         _deleteCall(context, model, index);
     }
+  }
+
+  /// Rewrites a call in place. Everything after it is re-run, so it can be refused — and then the
+  /// sequence is left exactly as it was.
+  Future<void> _editCall(
+      fm.BuildContext context, SequencerModel model, int index) async {
+    if (index < 0 || index >= model.calls.length) {
+      return;
+    }
+    final was = model.calls[index].name;
+    final controller = fm.TextEditingController(text: was)
+      ..selection = fm.TextSelection(baseOffset: 0, extentOffset: was.length);
+
+    final entered = await fm.showDialog<String>(
+        context: context,
+        builder: (ctx) => fm.AlertDialog(
+              title: fm.Text('Edit Call'),
+              content: fm.TextField(
+                controller: controller,
+                autofocus: true,
+                style: fm.TextStyle(fontSize: 24),
+                decoration: fm.InputDecoration(hintText: 'The call'),
+                onSubmitted: (value) => fm.Navigator.of(ctx).pop(value),
+              ),
+              actions: [
+                fm.TextButton(
+                    onPressed: () => fm.Navigator.of(ctx).pop(),
+                    child: fm.Text('Cancel')),
+                fm.TextButton(
+                    onPressed: () => fm.Navigator.of(ctx).pop(controller.text),
+                    child: fm.Text('Save')),
+              ],
+            ));
+    if (entered == null || entered.isBlank || !context.mounted) {
+      return;
+    }
+    if (entered.trim() == was.trim()) {
+      return;
+    }
+
+    final previous = model.callNames;
+    final failed = model.replaceCallAt(index, entered);
+    if (!context.mounted) {
+      return;
+    }
+    if (failed != null) {
+      _report(
+          failed.trim().toLowerCase() == entered.trim().toLowerCase()
+              ? 'Cannot use "${entered.trim()}" there. Sequence unchanged.'
+              : 'Changing "$was" to "${entered.trim()}" breaks "$failed". Sequence unchanged.',
+          failed: true);
+      return;
+    }
+    _report('Changed "$was" to "${entered.trim()}".',
+        undo: () => model.rebuildSequence(previous));
   }
 
   /// Opens a SECOND TamHelper carrying the sequence up to and including this call, so you can try
