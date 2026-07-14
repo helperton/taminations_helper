@@ -67,6 +67,11 @@ class SidecarDockRequest {
   ///  presenting, and the calls are on his cards. See sidecar_mode.dart.
   final bool floorOnly;
 
+  ///  A DISPLAY, not an app. While SquareCraft is presenting, the caller drives everything from the
+  ///  carousel — so the sidecar must never take the keyboard (or his arrow keys would stop reaching
+  ///  SquareCraft) and never take the mouse (clicks fall through to the cards behind it).
+  final bool passive;
+
   SidecarDockRequest({
     required this.hostFrame,
     required this.screenFrame,
@@ -74,6 +79,7 @@ class SidecarDockRequest {
     this.darkMode = false,
     this.alwaysOnTop = false,
     this.floorOnly = false,
+    this.passive = false,
   });
 
   static SidecarDockRequest? fromLaunchArgs(List<String> args) {
@@ -95,9 +101,10 @@ class SidecarDockRequest {
     final darkMode = args.contains('--dark-mode');
     final alwaysOnTop = args.contains('--always-on-top');
     final floorOnly = args.contains('--floor-only');
+    final passive = args.contains('--passive');
     return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
         dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop,
-        floorOnly: floorOnly);
+        floorOnly: floorOnly, passive: passive);
   }
 
   static SidecarDockRequest? fromJson(Map<String, dynamic> json) {
@@ -110,9 +117,10 @@ class SidecarDockRequest {
     final darkMode = json['darkMode'] as bool? ?? false;
     final alwaysOnTop = json['alwaysOnTop'] as bool? ?? false;
     final floorOnly = json['floorOnly'] as bool? ?? false;
+    final passive = json['passive'] as bool? ?? false;
     return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
         dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop,
-        floorOnly: floorOnly);
+        floorOnly: floorOnly, passive: passive);
   }
 
   static fm.Rect? _parseRectArg(String raw) {
@@ -408,6 +416,9 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     await windowManager.setAlwaysOnTop(request.alwaysOnTop);
     //  ...and show the floor alone; the caller reads the calls off his cards.
     floorOnlyMode.value = request.floorOnly;
+    //  Presenting: a display, not an app. Clicks fall through to the cards behind, and the window
+    //  never takes the keyboard — his arrow keys belong to SquareCraft.
+    await windowManager.setIgnoreMouseEvents(request.passive);
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
     }
@@ -428,8 +439,10 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       );
       await windowManager.setBounds(_applyResolverGrow(
           targetLeft, targetTop, targetWidth, targetHeight, request.screenFrame));
-      await windowManager.show();
-      await windowManager.focus();
+      await windowManager.show(inactive: request.passive);
+      if (!request.passive) {
+        await windowManager.focus();
+      }
       return;
     }
     final targetWidth = min(
@@ -450,8 +463,10 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     );
     await windowManager.setBounds(_applyResolverGrow(
         targetLeft, targetTop, targetWidth, targetHeight, request.screenFrame));
-    await windowManager.show();
-    await windowManager.focus();
+    await windowManager.show(inactive: request.passive);
+    if (!request.passive) {
+      await windowManager.focus();
+    }
   }
 
   /// Grow (true) or shrink (false) the sidecar to make room for the resolve
