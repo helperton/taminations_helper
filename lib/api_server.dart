@@ -11,6 +11,8 @@
     POST /undo     — removes the last N loaded calls
     POST /float    — float above other windows, or stop. Does NOT move the window.
                      Body: { "alwaysOnTop": true }
+    POST /visible  — stash the window out of sight, or bring it back. Keeps running; keeps
+                     its floor. Body: { "visible": false }
     POST /splice   — a branched TamHelper coming home (see branch.dart)
                      Body: { "seedCount": N, "calls": [...], "replaceTail": false }
     POST /sequence — loads and animates a sequence
@@ -106,6 +108,12 @@ class TamHelperApiServer {
 
   void setAlwaysOnTopHandler(Future<void> Function(bool onTop) handler) {
     _setAlwaysOnTop = handler;
+  }
+
+  Future<void> Function(bool visible)? _setVisible;
+
+  void setVisibilityHandler(Future<void> Function(bool visible) handler) {
+    _setVisible = handler;
   }
 
   void setWindowDebugInfoProvider(Future<Map<String, dynamic>> Function() provider) {
@@ -331,6 +339,10 @@ class TamHelperApiServer {
       return _handleFloat(request);
     }
 
+    if (request.method == 'POST' && path == 'visible') {
+      return _handleVisible(request);
+    }
+
     if (request.method == 'POST' && path == 'splice') {
       return _handleSplice(request);
     }
@@ -441,6 +453,27 @@ class TamHelperApiServer {
       model.undoLastCall();
     }
     return _jsonOk({'ok': true, 'undone': count});
+  }
+
+  /// Stash the window out of sight, or bring it back. NOTHING ELSE — the sidecar keeps running and
+  /// keeps its floor, so unstashing is instant and the sequence is still there. (Hidden, not killed:
+  /// the caller turns the sidecar off mid-tip and back on, and should not lose what he has called.)
+  Future<Response> _handleVisible(Request request) async {
+    final Map<String, dynamic> body;
+    try {
+      final raw = await request.readAsString();
+      body = raw.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return Response(400,
+          body: jsonEncode({'error': 'invalid JSON body'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+    final visible = body['visible'] as bool? ?? true;
+    await _setVisible?.call(visible);
+    _lastResponseSummary = 'visible = $visible';
+    return _jsonOk({'ok': true, 'visible': visible});
   }
 
   /// Float above the other windows, or stop. NOTHING ELSE — the window does not move.

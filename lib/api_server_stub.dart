@@ -29,6 +29,7 @@ class TamHelperApiServer {
   void setExpectedToken(dynamic token) {}
   void setDockWindowHandler(dynamic handler) {}
   void setAlwaysOnTopHandler(dynamic handler) {}
+  void setVisibilityHandler(dynamic handler) {}
   void setWindowDebugInfoProvider(dynamic provider) {}
 
   Future<int> launchBranch({

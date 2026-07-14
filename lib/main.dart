@@ -256,6 +256,20 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     tamHelperApiServer.setAlwaysOnTopHandler((onTop) async {
       await windowManager.setAlwaysOnTop(onTop);
     });
+    //  Stashed out of sight when the caller turns the sidecar off mid-tip — still running, still
+    //  holding its floor, so turning it back on is instant and nothing he called is lost.
+    //
+    //  NOT windowManager.hide(). That is orderOut(), and Flutter's macOS AppDelegate returns true
+    //  from applicationShouldTerminateAfterLastWindowClosed — so ordering out the only window
+    //  TERMINATES the app. Hiding it would have killed it, floor and all.
+    //
+    //  Transparent instead: the window stays in AppKit's list (the app lives), it cannot be seen,
+    //  and it cannot be clicked. The dock request that follows an unstash restores the mouse to
+    //  whatever the mode calls for.
+    tamHelperApiServer.setVisibilityHandler((visible) async {
+      await windowManager.setOpacity(visible ? 1.0 : 0.0);
+      await windowManager.setIgnoreMouseEvents(!visible);
+    });
     tamHelperApiServer.setWindowDebugInfoProvider(_windowDebugInfo);
   }
 
