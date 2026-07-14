@@ -9,6 +9,8 @@
     GET  /state    — current dancer state: positions, facing, formation, call history
     POST /reset    — clears the current sequence
     POST /undo     — removes the last N loaded calls
+    POST /float    — float above other windows, or stop. Does NOT move the window.
+                     Body: { "alwaysOnTop": true }
     POST /splice   — a branched TamHelper coming home (see branch.dart)
                      Body: { "seedCount": N, "calls": [...], "replaceTail": false }
     POST /sequence — loads and animates a sequence
@@ -98,6 +100,12 @@ class TamHelperApiServer {
 
   void setDockWindowHandler(Future<void> Function(Map<String, dynamic> request) handler) {
     _dockWindow = handler;
+  }
+
+  Future<void> Function(bool onTop)? _setAlwaysOnTop;
+
+  void setAlwaysOnTopHandler(Future<void> Function(bool onTop) handler) {
+    _setAlwaysOnTop = handler;
   }
 
   void setWindowDebugInfoProvider(Future<Map<String, dynamic>> Function() provider) {
@@ -319,6 +327,10 @@ class TamHelperApiServer {
       return await _handleUndo(request);
     }
 
+    if (request.method == 'POST' && path == 'float') {
+      return _handleFloat(request);
+    }
+
     if (request.method == 'POST' && path == 'splice') {
       return _handleSplice(request);
     }
@@ -429,6 +441,30 @@ class TamHelperApiServer {
       model.undoLastCall();
     }
     return _jsonOk({'ok': true, 'undone': count});
+  }
+
+  /// Float above the other windows, or stop. NOTHING ELSE — the window does not move.
+  ///
+  /// SquareCraft's presentation is full screen, so the sidecar has to float above it or it is not
+  /// seen at all. But floating on macOS is GLOBAL: it would sit over the browser and everything
+  /// else too. So SquareCraft floats it only while SquareCraft itself is the active app, and drops
+  /// it the moment you switch away — the sidecar rides above SquareCraft, and nothing more.
+  Future<Response> _handleFloat(Request request) async {
+    final Map<String, dynamic> body;
+    try {
+      final raw = await request.readAsString();
+      body = raw.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return Response(400,
+          body: jsonEncode({'error': 'invalid JSON body'}),
+          headers: {'Content-Type': 'application/json'});
+    }
+    final onTop = body['alwaysOnTop'] as bool? ?? false;
+    await _setAlwaysOnTop?.call(onTop);
+    _lastResponseSummary = 'alwaysOnTop = $onTop';
+    return _jsonOk({'ok': true, 'alwaysOnTop': onTop});
   }
 
   /// A branch coming home. Body: { seedCount, calls (the branch's WHOLE sequence), replaceTail }.

@@ -250,6 +250,12 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
       _darkMode.value = widget.initialDockRequest!.darkMode;
     }
     tamHelperApiServer.setDockWindowHandler(_handleDockRequestJson);
+    //  Float / stop floating, WITHOUT moving the window (see POST /float). SquareCraft floats the
+    //  sidecar only while SquareCraft itself is frontmost, so it rides above SquareCraft without
+    //  sitting on top of every other app.
+    tamHelperApiServer.setAlwaysOnTopHandler((onTop) async {
+      await windowManager.setAlwaysOnTop(onTop);
+    });
     tamHelperApiServer.setWindowDebugInfoProvider(_windowDebugInfo);
   }
 
