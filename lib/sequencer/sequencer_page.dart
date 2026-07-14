@@ -32,6 +32,7 @@ import 'resolve_panel.dart';
 import 'resolver_panel_controller.dart';
 import 'sequence_frame.dart';
 import 'sequencer_animation_frame.dart';
+import '../sidecar_mode.dart';
 import 'sequencer_model.dart';
 
 class SequencerTestPage extends fm.StatefulWidget {
@@ -114,13 +115,21 @@ class _SequencerPageState extends fm.State<SequencerPage> {
         respectsTopSafeArea: false,
         child: pp.Consumer<ResolverPanelController>(
           builder: (rcx, rc, _) {
-            final content = pp.Consumer2<TitleModel,Settings>(
+            final content = fm.ValueListenableBuilder<bool>(
+              valueListenable: floorOnlyMode,
+              builder: (fctx, floorOnly, _) => pp.Consumer2<TitleModel,Settings>(
             builder: (context,titleModel,settings,_) {
               //  Setting the formation here if also set above
               //  can clobber calls passed in by the URL
               if (!formationSetByState)
                 model.setStartingFormation(validStartingFormation(Settings.startingFormation));
               titleModel.title = 'Sequencer';
+              //  FLOOR ONLY (see sidecar_mode.dart). SquareCraft is presenting and the caller has
+              //  the calls on his cards — he wants the dancers, not the timeline, the call list,
+              //  the input line or the buttons. Same widget the web embed uses.
+              if (floorOnly) {
+                return fm.Column(children: [BasicSequencerAnimation()]);
+              }
               // #103 embed: floor-only. With ?embed=1 on web, render just the
               // animation floor — no controls, input, buttons, or menu — while
               // staying inside this page's provider scope so it's fully wired
@@ -160,6 +169,7 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               }
               return _desktopLandscapeContent();
             }
+            ),
             );
             if (!rc.isOpen) return content;
             final isDark = fm.Theme.of(rcx).brightness == fm.Brightness.dark;

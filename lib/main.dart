@@ -46,6 +46,7 @@ import 'pages/settings_page.dart';
 import 'pages/start_practice_page.dart';
 import 'pages/tutorial_page.dart';
 import 'resolve_client.dart';
+import 'sidecar_mode.dart';
 import 'sequencer/abbreviations_frame.dart';
 import 'sequencer/resolver_panel_controller.dart';
 import 'sequencer/abbreviations_model.dart';
@@ -62,12 +63,17 @@ class SidecarDockRequest {
   ///  the floor would sit behind the black and never be seen.
   final bool alwaysOnTop;
 
+  ///  Show the dance floor and nothing else — no timeline, no call list, no buttons. The caller is
+  ///  presenting, and the calls are on his cards. See sidecar_mode.dart.
+  final bool floorOnly;
+
   SidecarDockRequest({
     required this.hostFrame,
     required this.screenFrame,
     this.dockFrame,
     this.darkMode = false,
     this.alwaysOnTop = false,
+    this.floorOnly = false,
   });
 
   static SidecarDockRequest? fromLaunchArgs(List<String> args) {
@@ -88,8 +94,10 @@ class SidecarDockRequest {
     final dockFrame = dockValue.isEmpty ? null : _parseRectArg(dockValue.split('=').last);
     final darkMode = args.contains('--dark-mode');
     final alwaysOnTop = args.contains('--always-on-top');
+    final floorOnly = args.contains('--floor-only');
     return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
-        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop);
+        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop,
+        floorOnly: floorOnly);
   }
 
   static SidecarDockRequest? fromJson(Map<String, dynamic> json) {
@@ -101,8 +109,10 @@ class SidecarDockRequest {
     final dockFrame = _parseRectJson(json['dockFrame']);
     final darkMode = json['darkMode'] as bool? ?? false;
     final alwaysOnTop = json['alwaysOnTop'] as bool? ?? false;
+    final floorOnly = json['floorOnly'] as bool? ?? false;
     return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
-        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop);
+        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop,
+        floorOnly: floorOnly);
   }
 
   static fm.Rect? _parseRectArg(String raw) {
@@ -396,6 +406,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     _darkMode.value = request.darkMode;
     //  Presenting: float above SquareCraft's full-screen black, or the floor is simply not there.
     await windowManager.setAlwaysOnTop(request.alwaysOnTop);
+    //  ...and show the floor alone; the caller reads the calls off his cards.
+    floorOnlyMode.value = request.floorOnly;
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
     }
