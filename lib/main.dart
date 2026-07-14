@@ -58,11 +58,16 @@ class SidecarDockRequest {
   final fm.Rect? dockFrame;
   final bool darkMode;
 
+  ///  Float above everything. SquareCraft's presentation mode goes FULL SCREEN, so without this
+  ///  the floor would sit behind the black and never be seen.
+  final bool alwaysOnTop;
+
   SidecarDockRequest({
     required this.hostFrame,
     required this.screenFrame,
     this.dockFrame,
     this.darkMode = false,
+    this.alwaysOnTop = false,
   });
 
   static SidecarDockRequest? fromLaunchArgs(List<String> args) {
@@ -82,7 +87,9 @@ class SidecarDockRequest {
         .firstWhere((arg) => arg.startsWith('--sidecar-dock-frame='), orElse: () => '');
     final dockFrame = dockValue.isEmpty ? null : _parseRectArg(dockValue.split('=').last);
     final darkMode = args.contains('--dark-mode');
-    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame, darkMode: darkMode);
+    final alwaysOnTop = args.contains('--always-on-top');
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
+        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop);
   }
 
   static SidecarDockRequest? fromJson(Map<String, dynamic> json) {
@@ -93,7 +100,9 @@ class SidecarDockRequest {
     }
     final dockFrame = _parseRectJson(json['dockFrame']);
     final darkMode = json['darkMode'] as bool? ?? false;
-    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame, dockFrame: dockFrame, darkMode: darkMode);
+    final alwaysOnTop = json['alwaysOnTop'] as bool? ?? false;
+    return SidecarDockRequest(hostFrame: hostFrame, screenFrame: screenFrame,
+        dockFrame: dockFrame, darkMode: darkMode, alwaysOnTop: alwaysOnTop);
   }
 
   static fm.Rect? _parseRectArg(String raw) {
@@ -385,6 +394,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     }
     _lastDockRequest = request;
     _darkMode.value = request.darkMode;
+    //  Presenting: float above SquareCraft's full-screen black, or the floor is simply not there.
+    await windowManager.setAlwaysOnTop(request.alwaysOnTop);
     double convertTopOriginY(fm.Rect rect, {double height = 0}) {
       return request.screenFrame.bottom - rect.bottom + height;
     }
