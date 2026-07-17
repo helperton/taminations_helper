@@ -43,6 +43,13 @@ class BeatNotifier extends fm.ChangeNotifier {
   bool get isRunning => _ticker.isTicking;
   var isFinished = false;
 
+  /// Test hook: force the muted state Flutter applies to a backgrounded sidecar's ticker, so the
+  /// "started twice" regression (start() on an active-but-muted ticker) can be exercised directly.
+  @fm.visibleForTesting
+  set tickerMutedForTest(bool value) => _ticker.muted = value;
+  @fm.visibleForTesting
+  bool get tickerActiveForTest => _ticker.isActive;
+
   BeatNotifier() {
     _ticker = Ticker((_) {
       final now = DateTime.now();
@@ -74,7 +81,14 @@ class BeatNotifier extends fm.ChangeNotifier {
   }
 
   void start() {
-    if (!_ticker.isTicking) {
+    //  Guard on isActive, NOT isTicking. Ticker.start() throws "A ticker was started twice" when
+    //  the ticker is already ACTIVE (isActive == a start is outstanding). isTicking is a NARROWER
+    //  condition — isActive AND not muted — and Flutter mutes a ticker whenever the app's frames
+    //  are disabled (e.g. SquareCraft is presenting and this sidecar is a backgrounded, floating
+    //  window). A muted-but-active ticker has isTicking == false, so the old guard let start()
+    //  through and Ticker.start() threw — and the /sequence request that triggered it died. Skip
+    //  when active; the ticker resumes on its own when the app un-mutes.
+    if (!_ticker.isActive) {
       if (_beat >= _endBeat)
         _beat = _startBeat;
       isFinished = false;
