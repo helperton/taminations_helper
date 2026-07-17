@@ -125,7 +125,23 @@ class TamHelperApiServer {
     final handler = const Pipeline()
         .addMiddleware(_corsMiddleware())
         .addHandler(_router);
-    _server = await shelf_io.serve(handler, 'localhost', port);
+    try {
+      _server = await shelf_io.serve(handler, 'localhost', port);
+    } on SocketException catch (e) {
+      //  DON'T RUN IF THE PORT IS ALREADY IN USE.
+      //
+      //  Another TamHelper already owns :$port. SquareCraft talks to exactly one TamHelper there,
+      //  so a second is useless — and left to itself the unhandled bind error either crashes this
+      //  process (the window appears while Flutter boots, then vanishes) or leaves it windowed but
+      //  API-less. Both wedge the sidecar. Bow out cleanly instead: the instance that HAS the port
+      //  stays the only one, and SquareCraft's recovery (kill a wedged one, relaunch) gets a clean
+      //  port to bind.
+      //
+      //  This runs before runApp(), so a second instance never even shows a window.
+      stderr.writeln('[TamHelper] localhost:$port is already in use — another TamHelper owns it; '
+          'exiting. ($e)');
+      exit(0);
+    }
     // ignore: avoid_print
     print('[TamHelper] API server listening on localhost:$port');
   }
