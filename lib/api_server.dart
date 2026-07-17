@@ -27,6 +27,7 @@
 
 */
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -588,6 +589,13 @@ class TamHelperApiServer {
     return false;
   }
 
+  //  /sequence mutates the ONE shared sequencer model (navigate → reset → load → play). Two
+  //  overlapping requests — a manual Play-in-TH landing on top of the presentation follower, a
+  //  double click — would tear the model down under each other, and the loser threw past the
+  //  handler's guards into a shelf 500 (a non-JSON body SquareCraft reports as "Unexpected
+  //  response"). Serialize them: one sequence at a time.
+  Future<void> _sequenceGate = Future.value();
+
   Future<Response> _handleSequence(Request request) async {
     final Map<String, dynamic> body;
     try {
@@ -598,6 +606,35 @@ class TamHelperApiServer {
           headers: {'Content-Type': 'application/json'});
     }
 
+    //  Chain behind whatever sequence is already running, and let the next one chain behind us.
+    final completer = Completer<void>();
+    final previous = _sequenceGate;
+    _sequenceGate = completer.future;
+    try {
+      await previous;
+      //  The handler must ALWAYS speak JSON. Its inner sections guard the expected failures
+      //  (bad formation, an undanceable call); this is the backstop for the unexpected — a torn
+      //  model, an animation in a bad state — so nothing can escape as a 500.
+      try {
+        return await _runSequence(body);
+      } catch (e, st) {
+        _lastError = '$e';
+        _lastResponseSummary = 'sequence threw';
+        // ignore: avoid_print
+        print('[TamHelper] /sequence threw: $e\n$st');
+        return _jsonOk({
+          'ok': false,
+          'failingIndex': null,
+          'failingCall': null,
+          'error': 'TamHelper hit an internal error loading the sequence: $e',
+        });
+      }
+    } finally {
+      completer.complete();
+    }
+  }
+
+  Future<Response> _runSequence(Map<String, dynamic> body) async {
     final formation = (body['formation'] as String?) ?? 'Squared Set';
     final shouldReset = (body['reset'] as bool?) ?? true;
     final shouldPlayThrough = (body['play'] as bool?) ?? false;
