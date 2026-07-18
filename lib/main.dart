@@ -436,6 +436,10 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
     await windowManager.setAlwaysOnTop(request.alwaysOnTop);
     //  ...and show the floor alone; the caller reads the calls off his cards.
     floorOnlyMode.value = request.floorOnly;
+    //  Movable = floor-only but NOT passive: the caller has unlocked the floor to reposition it, so
+    //  the floor-only view turns on its drag surface. (Editing isn't floor-only; locked presenting
+    //  is passive.)
+    sidecarMovable.value = request.floorOnly && !request.passive;
     //  Presenting: a display, not an app. Clicks fall through to the cards behind, and the window
     //  never takes the keyboard — his arrow keys belong to SquareCraft.
     await windowManager.setIgnoreMouseEvents(request.passive);

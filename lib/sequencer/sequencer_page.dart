@@ -23,6 +23,7 @@ import 'package:flutter/material.dart' as fm;
 import 'package:flutter_resizable_container/flutter_resizable_container.dart';
 import 'package:provider/provider.dart' as pp;
 import 'package:taminations/beat_notifier.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../common_flutter.dart';
 import '../pages/animation_page.dart';
@@ -128,7 +129,44 @@ class _SequencerPageState extends fm.State<SequencerPage> {
               //  the calls on his cards — he wants the dancers, not the timeline, the call list,
               //  the input line or the buttons. Same widget the web embed uses.
               if (floorOnly) {
-                return fm.Column(children: [BasicSequencerAnimation()]);
+                final floor = fm.Column(children: [BasicSequencerAnimation()]);
+                //  Unlocked for repositioning: make the WHOLE floor a drag surface so the caller can
+                //  move the window (there is no title bar in floor-only mode), framed in amber with a
+                //  grip hint on top. The grip is IgnorePointer so it doesn't block the drag beneath
+                //  it. Locked/passive: just the floor, byte-for-byte as before.
+                return fm.ValueListenableBuilder<bool>(
+                  valueListenable: sidecarMovable,
+                  builder: (mctx, movable, _) {
+                    if (!movable) return floor;
+                    return fm.Container(
+                      decoration: fm.BoxDecoration(
+                        border: fm.Border.all(
+                          color: const fm.Color(0xFFFF9F0A),
+                          width: 2,
+                        ),
+                      ),
+                      child: fm.Stack(
+                        children: [
+                          DragToMoveArea(child: floor),
+                          const fm.Positioned(
+                            top: 4,
+                            left: 0,
+                            right: 0,
+                            child: fm.IgnorePointer(
+                              child: fm.Center(
+                                child: fm.Icon(
+                                  fm.Icons.drag_indicator,
+                                  size: 20,
+                                  color: fm.Color(0xFFFF9F0A),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               }
               // #103 embed: floor-only. With ?embed=1 on web, render just the
               // animation floor — no controls, input, buttons, or menu — while

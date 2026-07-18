@@ -29,3 +29,11 @@ import 'package:flutter/foundation.dart';
 /// It is a notifier rather than a launch flag alone because SquareCraft flips it live, on the same
 /// dock request that moves the window: on when he goes on stage, off when he comes back to editing.
 final floorOnlyMode = ValueNotifier<bool>(false);
+
+/// MOVABLE floor.
+///
+/// While presenting, the floor is normally passive — it ignores the mouse so clicks fall through to
+/// SquareCraft's cards behind it. When the caller unlocks it to reposition, SquareCraft sends a dock
+/// request that is still floor-only but no longer passive; this notifier goes true, and the
+/// floor-only view turns on a drag surface so the whole floor can be dragged to a new spot.
+final sidecarMovable = ValueNotifier<bool>(false);
