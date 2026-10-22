@@ -19,9 +19,15 @@
 */
 
 import '../../../moves.dart';
+import '../../normalize_call.dart';
 import '../common.dart';
 
-//  A figure from a squared set, called for the heads or the sides:
+//  Stars from a squared set. Any four (Men, Ladies, Heads, Sides) Star Right or Left: in to the
+//  middle and once around, which leaves each of them in the star in front of their partner or
+//  their corner. "to Your Corner" (or "to Your Partner") goes round until they are in front of
+//  them, and 1/4, 1/2 or 3/4 that far round. Out of the star, Allemande Left, Allemande Right
+//  Your Corner and the partner allemandes take everyone home (see out_of_the_star.dart).
+//  For the heads or the sides, Star Right to Corner is also the start of a figure:
 //
 //    Heads Star Right to Corner  — the heads star right once around in the middle, which
 //                                  leaves each of them beside their corner
@@ -34,12 +40,27 @@ import '../common.dart';
 //  Stars here have four dancers on the diagonals of a circle of radius 1. Each call ends exactly
 //  where the next one starts, so none of them is snapped to a standard formation.
 
-//  The star spot round [center] nearest [location], and the way to face there with the
-//  center on the star hand.
-(Vector, double) _starSpot(Vector center, Vector location, {required bool isLeft}) {
-  final spot = [for (final a in [pi/4, pi*3/4, pi*5/4, pi*7/4]) center + Vector(cos(a), sin(a))]
-      .reduce((a, b) => (a - location).length < (b - location).length ? a : b);
-  return (spot, (spot - center).angle + (isLeft ? pi/2 : -pi/2));
+//  A star spot round [center] for each of [dancers], and the way to face there with the center
+//  on the star hand. The spots are shared out so the dancers walk and turn the least between
+//  them: going to the nearest spot can mean a three-quarter turn on the way in.
+Map<Dancer, (Vector, double)> _starSpots(List<Dancer> dancers, Vector center,
+    {required bool isLeft}) {
+  final spots = [
+    for (final a in [pi/4, pi*3/4, pi*5/4, pi*7/4])
+      (center + Vector(cos(a), sin(a)), a + (isLeft ? pi/2 : -pi/2)),
+  ];
+  double cost(Dancer d, (Vector, double) spot) =>
+      (spot.$1 - d.location).length + 0.5 * spot.$2.angleDiff(d.angleFacing).abs();
+  //  Every way of giving each dancer a different spot, cheapest first
+  Iterable<List<int>> shares(int n, List<int> taken) sync* {
+    if (n == 0) yield taken;
+    for (var i = 0; i < spots.length; i++)
+      if (!taken.contains(i)) yield* shares(n - 1, [...taken, i]);
+  }
+  double total(List<int> share) =>
+      [for (var i = 0; i < dancers.length; i++) cost(dancers[i], spots[share[i]])].sum();
+  final best = shares(dancers.length, []).reduce((a, b) => total(a) <= total(b) ? a : b);
+  return {for (var i = 0; i < dancers.length; i++) dancers[i]: spots[best[i]]};
 }
 
 //  Round the star by [eighths] of a turn.
@@ -59,29 +80,55 @@ Path _aroundTheStar(int eighths, {required bool isLeft}) {
   return path;
 }
 
-//  Step in to the star round [center] and go once around.
-void _starOnceAround(CallContext ctx, Dancer d, Vector center, {required bool isLeft}) {
-  final (spot, facing) = _starSpot(center, d.location, isLeft: isLeft);
-  d.path = ctx.moveToPosition(d, spot, facing) + _aroundTheStar(8, isLeft: isLeft);
-  d.animateToEnd();
+//  [dancers] step in to the star round [center] and go once around.
+void _starOnceAround(CallContext ctx, List<Dancer> dancers, Vector center,
+    {required bool isLeft}) {
+  for (final MapEntry(key: d, value: (spot, facing))
+      in _starSpots(dancers, center, isLeft: isLeft).entries) {
+    d.path = ctx.moveToPosition(d, spot, facing) + _aroundTheStar(8, isLeft: isLeft);
+    d.animateToEnd();
+  }
 }
 
-class StarRightToCorner extends Action {
+class StarFromSquaredSet extends Action with IsLeft {
 
   @override var level = LevelData.MS;
   @override var helplink = 'ms/star';
-  @override var help = '''From a squared set, Heads (or Sides) Star Right to Corner:
-star right once around, which leaves each of you beside your corner.''';
+  @override var help = '''From a squared set, any four (Men, Ladies, Heads, Sides)
+Star Right or Star Left: in to the middle and once around, which leaves you in the star in
+front of your partner or your corner. Star ... to Your Corner (or to Your Partner) goes round
+until you are in front of them; Star ... 1/4, 1/2 or 3/4 goes that far round.''';
 
-  StarRightToCorner(super.name);
+  StarFromSquaredSet(super.name);
 
   @override
   void performCall(CallContext ctx) {
+    final norm = name.norm;
+    isLeft = norm.startsWith('Left');
     if (!ctx.isSquare())
       throw CallError('$name is from a squared set');
+    if (ctx.actives.length != 4)
+      throw CallError('$name is for four dancers');
     ctx.noSnap();
-    for (final d in ctx.actives)
-      _starOnceAround(ctx, d, Vector(), isLeft: false);
+    final to = norm.endsWith('Corner') ? ctx.originalCorner
+        : norm.endsWith('Partner') ? ctx.originalPartner : null;
+    final quarters = {'14': 1, '12': 2, '34': 3}[norm.substring(norm.length - 2)];
+    final athome = ctx.dancers.where((d) => !ctx.actives.contains(d)).toList();
+    for (final MapEntry(key: d, value: (spot, facing))
+        in _starSpots(ctx.actives, Vector(), isLeft: isLeft).entries) {
+      //  Round to the first spot in front of the one named, by quarters
+      bool inFrontOf(int eighths) {
+        final end = spot.rotate((isLeft ? eighths : -eighths) * pi/4);
+        return to!(d) == athome.reduce((a, b) =>
+            (a.location - end).length < (b.location - end).length ? a : b);
+      }
+      final eighths = quarters != null ? quarters * 2
+          : to == null ? 8
+          : [2, 4, 6, 8].firstWhere(inFrontOf, orElse: () =>
+              throw CallError('Dancer $d cannot star to ${norm.endsWith('Corner') ? 'corner' : 'partner'}'));
+      d.path = ctx.moveToPosition(d, spot, facing) + _aroundTheStar(eighths, isLeft: isLeft);
+      d.animateToEnd();
+    }
   }
 
 }
@@ -107,16 +154,17 @@ They step back home, and you are left on the inside.''';
     if (inMiddle.length != 4 || atHome.length != 4 || centers.length != 2)
       throw CallError('$name needs four in the middle and two couples at home');
     ctx.noSnap();
-    for (final d in atHome) {
-      final (home, facing) = (d.location, d.tx.angle);
-      _starOnceAround(ctx, d, starFor(d), isLeft: true);
+    final homes = {for (final d in atHome) d: (d.location, d.tx.angle)};
+    Vector nearest(Dancer d) => centers.reduce((a, b) =>
+        (a - d.location).length < (b - d.location).length ? a : b);
+    for (final center in centers)
+      _starOnceAround(ctx, [
+        ...atHome.where((d) => starFor(d) == center),
+        ...inMiddle.where((d) => nearest(d) == center),
+      ], center, isLeft: true);
+    for (final MapEntry(key: d, value: (home, facing)) in homes.entries) {
       d.path = d.path + ctx.moveToPosition(d, home, facing);
       d.animateToEnd();
-    }
-    for (final d in inMiddle) {
-      final center = centers.reduce((a, b) =>
-          (a - d.location).length < (b - d.location).length ? a : b);
-      _starOnceAround(ctx, d, center, isLeft: true);
     }
   }
 
@@ -134,8 +182,9 @@ Heads (or Sides) star right in the middle and drop out as you come by home.''';
   @override
   void performCall(CallContext ctx) {
     ctx.noSnap();
+    final spots = _starSpots(ctx.actives, Vector(), isLeft: false);
     for (final d in ctx.actives) {
-      final (spot, facing) = _starSpot(Vector(), d.location, isLeft: false);
+      final (spot, facing) = spots[d]!;
       final (home, homeFacing) = ctx.home(d);
       //  Go round until home is straight ahead, then walk out to it and turn to face in
       int offBy(int eighths) {

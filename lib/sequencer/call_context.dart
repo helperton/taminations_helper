@@ -1201,6 +1201,16 @@ class CallContext {
   Dancer? originalPartner(Dancer d) => dancers.firstWhereOrNull((d2) =>
       d2 != d && d2.numberCouple == d.numberCouple && d2.gender != d.gender);
 
+  //  A man's original corner is the lady of the couple before his, a lady's the man of the
+  //  couple after hers
+  Dancer? originalCorner(Dancer d) {
+    final couple = d.gender == Gender.BOY
+        ? (d.numberCouple.i + 2) % 4 + 1
+        : d.numberCouple.i % 4 + 1;
+    return dancers.firstWhereOrNull((d2) =>
+        d2.gender != d.gender && d2.numberCouple.i == couple);
+  }
+
   //  Return dancers that are in between two other dancers
   List<Dancer> inBetween(Dancer d1, Dancer d2) =>
       dancers.where((d) =>

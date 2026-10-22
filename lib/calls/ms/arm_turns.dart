@@ -25,6 +25,7 @@ import '../../moves.dart';
   final List<AnimatedCall> ArmTurns = [
 
     AnimatedCall('Turn Partner by the Right',
+      notForSequencer: true,
       formation:Formation('', dancers:[
         Dancer.fromData(gender:Gender.BOY,x:-3,y:1,angle:270),
         Dancer.fromData(gender:Gender.GIRL,x:-3,y:-1,angle:90),
@@ -47,6 +48,7 @@ import '../../moves.dart';
       ]),
 
     AnimatedCall('Turn Partner by the Left',
+      notForSequencer: true,
       formation:Formation('', dancers:[
         Dancer.fromData(gender:Gender.BOY,x:-3,y:1,angle:270),
         Dancer.fromData(gender:Gender.GIRL,x:-3,y:-1,angle:90),

@@ -257,7 +257,8 @@ void main() async {
 
   //  Called over and over, every Allemande Left lands where the first one did and every
   //  right-hand turn where the first Right Arm Turn did — nobody drifts.
-  for (final right in ['Allemande Right', 'Right Allemande', 'Right Arm Turn'])
+  for (final right in ['Allemande Right', 'Right Allemande', 'Right Arm Turn',
+                       'Turn Partner Right', 'Turn Partner by the Right'])
   testWidgets('AL, $right, AL, $right, AL, $right, AL stays in place', (tester) async {
     await tester.runAsync(() async {
       final afterAL = floor(await danced('Allemande Left'));
@@ -333,6 +334,28 @@ void main() async {
       }
       final next = await danced('Allemande Left\n$star\n$allemande\nAllemande Left');
       expect(next.errorString, '', reason: 'Allemande Left should follow');
+    });
+  });
+
+  //  Turn Partner (by the) Left / Right is the partner allemande by that hand.
+  for (final (said, meant) in [
+    ('Turn Partner Left', 'Allemande Left Partner'),
+    ('Turn Your Partner by the Left', 'Allemande Left Partner'),
+    ('Turn Partner Right', 'Allemande Right'),
+  ])
+  testWidgets('"$said" is "$meant"', (tester) async {
+    await tester.runAsync(() async {
+      final a = await danced(said);
+      final b = await danced(meant);
+      expect(a.errorString, '');
+      expect(a.calls.last.beats, b.calls.last.beats);
+      final ref = floor(b);
+      for (final d in floor(a).dancers) {
+        final r = same(ref, d);
+        expect((d.location - r.location).length < 0.001 &&
+               d.angleFacing.isAround(r.angleFacing, delta: 0.001), isTrue,
+            reason: '"$said" left dancer $d somewhere other than "$meant" does');
+      }
     });
   });
 

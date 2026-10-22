@@ -101,7 +101,17 @@ String normalizeCall(String callname) =>
         .replaceAll('(all 8|column|couples) Circulate'.ri,'Circulate')
         .replaceAll('\\ballamande?\\b'.ri,'Allemande')
         .replaceAllMapped('(left|right)\\s*allemande'.ri, (m) => 'Allemande ${m[1]!.capitalize()}')
+        .replaceAllMapped('turn (your )?(partner|corner) (by the )?(left|right)'.ri,
+            (m) => 'Allemande ${m[4]!.capitalize()} ${m[2]!.capitalize()}')
+    //  RH, LH: Right Hand, Left Hand
+        .replaceAll('\\brh\\b'.ri, 'Right Hand')
+        .replaceAll('\\blh\\b'.ri, 'Left Hand')
         .replaceAllMapped('\\bstar (right|left)\\b'.ri, (m) => '${m[1]} Hand Star')
+    //  Rollaway with a Half Sashay is the full name of Rollaway
+        .replaceAll('\\broll ?away with 12 sashay\\b'.ri, 'Rollaway')
+    //  Ladies Promenade (Inside the Ring) is Four Ladies Promenade
+        .replaceAllMapped('^(all )?(4 )?(boy|girl) promenade( inside( the ring)?)?\$'.ri,
+            (m) => '4 ${m[3]} Promenade')
         .replaceAllMapped('interlocked (flip|cut) the'.ri,
             (m) => '${m[1]} the Interlocked')
         .replaceAll('walk around your corner'.ri,'Walk Around the Corner')

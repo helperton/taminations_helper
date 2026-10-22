@@ -74,8 +74,9 @@ import 'a2/transfer_and.dart';
 import 'a2/zig.dart';
 import 'a2/zig_zag.dart';
 import 'ms/allemande_left.dart';
+import 'ms/corner_allemande.dart';
 import 'ms/partner_allemande.dart';
-import 'ms/star_to_corner.dart';
+import 'ms/squared_set_stars.dart';
 import 'ms/around_to_a_line.dart';
 import 'ms/arm_turn.dart';
 import 'ms/bend_the_line.dart';
@@ -381,7 +382,9 @@ abstract class CodedCall extends Call {
     'AllemandeLeft'.ri: (name) => AllemandeLeft(name),
     'Allemande(Right((Your)?Partner)?|Left(Your)?Partner)'.ri: (name) => PartnerAllemande(name),
     '(Left|Right)ArmTurn(14|12|34)?'.ri: (name) => ArmTurn(name),
-    'RightHandStartoCorner'.ri: (name) => StarRightToCorner(name),
+    'Allemande(Left|Right)(Your|the)?Corner'.ri: (name) => CornerAllemande(name),
+    '(Left|Right)HandStar(to(Your|the)?(Corner|Partner)|(1|Full|AlltheWay)Around|14|12|34)?'.ri:
+        (name) => StarFromSquaredSet(name),
     'WithCornerLeftHandStar'.ri: (name) => WithCornerStarLeft(name),
     'RightHandStarBackHome'.ri: (name) => StarRightBackHome(name),
     'AlterAndCirculate'.ri: (name) => AlterAndCirculate(name),
@@ -405,7 +408,7 @@ abstract class CodedCall extends Call {
     '(Line|Wave)of(6|8)(Left)?TurnAndDeal'.ri: (name) => BigLineTurnAndDeal(name),
     '(InYour)?Block.*'.ri: (name) => BlockFormation(name),
     'Bounce(the)?($specifier)?'.ri: (name) => Bounce(name),
-    'Boy'.ri: (name) => Boys(name),
+    '((All)?4)?Boy'.ri: (name) => Boys(name),
     'BoxCounterRotate(14|12|34)'.ri: (name) => BoxCounterRotateFraction(name),
     'BoxTheGnat'.ri: (name) => BoxTheGnat(name),
     'BraceThru'.ri: (name) => BraceThru(name),
@@ -506,7 +509,7 @@ abstract class CodedCall extends Call {
     'FollowToADiamond'.ri: (name) => FollowToADiamond(name),
     '\\d\\d'.ri: (name) => Fraction(name),
 
-    'Girl|Ladies|Lady'.ri: (name) => Girls(name),
+    '((All)?4)?(Girl|Ladies|Lady)'.ri: (name) => Girls(name),
     'Grand'.ri: (name) => Grand(name),
     '((Head|Side)Face)?GrandSquare(\\d+)Steps'.ri: (name) => GrandSquare(name),
 

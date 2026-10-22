@@ -20,6 +20,7 @@
 
 import '../../../moves.dart';
 import '../common.dart';
+import 'out_of_the_star.dart';
 
 class AllemandeLeft extends Action {
 
@@ -31,6 +32,12 @@ class AllemandeLeft extends Action {
   void performCall(CallContext ctx) {
     if (ctx.dancers.length != 8)
       throw CallError('Only for 4 couples at this point.');
+    //  Out of a star (Ladies Star Right to Your Corner), with the corner in front
+    if (isStarInTheMiddle(ctx)) {
+      allemandeOutOfTheStar(ctx, name, isLeft: true,
+          turnWith: ctx.originalCorner, finishFacing: ctx.originalPartner);
+      return;
+    }
     //   Compute the center point of each couple
     _startPoints = [1, 2, 3, 4].map((coupleNumber) {
       var couple = ctx.dancers.where((d) => (d.gender == Gender.GIRL)

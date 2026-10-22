@@ -18,8 +18,8 @@
 
 */
 
-import '../../../moves.dart';
 import '../common.dart';
+import 'out_of_the_star.dart';
 
 //  Allemande with your partner: Allemande Right (Your Partner), or Allemande Left (Your)
 //  Partner. Partners turn 1/2 by that hand, let go and step on, and in a squared set finish
@@ -43,14 +43,12 @@ Either works with one of each couple coming out of a star in the middle.''';
   @override
   void performCall(CallContext ctx) {
     isLeft = name.contains('left'.ri);
-    final spots = CallContext.fromFormation(Formation('Squared Set'))
-        .dancers.map((d) => d.location).toList();
-    bool onASpot(Dancer d) => spots.any((s) => s.isAbout(d.location));
-    if (ctx.actives.every(onASpot)) {
+    if (ctx.actives.every(onAHomeSpot)) {
       ctx.applyCalls('Face Partner', '$whichWay Arm Turn');
       _faceOnTheStep(ctx);
     } else
-      _outOfTheStar(ctx, spots, onASpot);
+      allemandeOutOfTheStar(ctx, name, isLeft: isLeft,
+          turnWith: ctx.originalPartner, finishFacing: ctx.originalCorner);
   }
 
   //  Face Partner is a turn on the spot. Fold it into the first step of the arm turn so
@@ -69,50 +67,6 @@ Either works with one of each couple coming out of a star in the middle.''';
             beats: step.beats, hands: step.hands);
         d.path = Path([faceAndStep, ...rest]);
       }
-      d.animateToEnd();
-    }
-  }
-
-  //  One of each couple is home, the other in the middle. They meet just inside the home line,
-  //  turn 1/2, and step on — the one from the middle to the empty spot beside their partner —
-  //  finishing home facing their corners.
-  void _outOfTheStar(CallContext ctx, List<Vector> spots, bool Function(Dancer) onASpot) {
-    final ends = <Dancer, Vector>{};
-    for (final d in ctx.actives) {
-      final partner = ctx.originalPartner(d);
-      if (partner == null || onASpot(d) == onASpot(partner))
-        throw CallError('$name needs partners facing, or one of them in the middle');
-      final home = onASpot(d) ? d : partner;
-      final beside = spots.firstWhereOrNull((s) =>
-          (s - home.location).length.isAbout(2.0) &&
-          !ctx.dancers.any((o) => o.location.isAbout(s)));
-      if (beside == null)
-        throw CallError('Dancer $d has no spot to come home to beside their partner');
-      ends[d] = d == home ? home.location : beside;
-    }
-    for (final d in ctx.actives) {
-      final partner = ctx.originalPartner(d)!;
-      final isHome = onASpot(d);
-      final homeSpot = isHome ? d.location : partner.location;
-      final besideSpot = isHome ? ends[partner]! : ends[d]!;
-      //  Along the side from the home partner's spot to the spot beside, and in toward the center
-      final along = (besideSpot - homeSpot) / 2.0;
-      final mid = (homeSpot + besideSpot) / 2.0;
-      var inward = Vector(-along.y, along.x);
-      if (inward.x * mid.x + inward.y * mid.y > 0)
-        inward = -inward;
-      final meet = mid - along * 0.5 + inward * 0.5;
-      //  The one from the middle comes in from the inside, the one at home from the outside
-      final side = isHome ? -0.5 : 0.5;
-      final facing = (isHome ? along : -along).angle;
-      final end = ends[d]!;
-      final away = end - ends[partner]!;
-      final corner = spots.firstWhere((s) => (s - end).length.isAbout(sqrt(8)) &&
-          (s - end).x * away.x + (s - end).y * away.y > 0);
-      d.path = ctx.moveToPosition(d, meet + inward * side, facing) +
-          (isLeft ? SwingLeft : SwingRight).scale(0.5, 0.5);
-      d.animateToEnd();
-      d.path = d.path + ctx.moveToPosition(d, end, (corner - end).angle);
       d.animateToEnd();
     }
   }
