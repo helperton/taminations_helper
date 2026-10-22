@@ -636,10 +636,14 @@ class _SequencerEditLineState extends fm.State<SequencerEditLine> {
                           icon:fm.Icon(fm.Icons.clear),
                         onPressed: () => { textFieldController.clear() },
                       ),
-                      errorStyle: fm.TextStyle(fontSize: 20,
-                          color: model.errorString.contains('Note') ? fm.Colors.blue : fm.Colors.red),
-                      errorMaxLines: 20,
-                      errorText: model.errorString.isEmpty ? null : model.errorString),
+                      //  The floor colour behind this is user-tunable, so coloured text
+                      //  can't stay readable on it; the message gets its own band
+                      error: model.errorString.isEmpty ? null : fm.Container(
+                          color: model.errorString.contains('Note')
+                              ? fm.Colors.blue.shade800 : fm.Colors.red.shade800,
+                          padding: fm.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: fm.Text(model.errorString,
+                              style: fm.TextStyle(fontSize: 20, color: fm.Colors.white)))),
                   enableSuggestions: true,
                   style: fm.TextStyle(fontSize: 24),
                   //  Code to run when user presses Enter
