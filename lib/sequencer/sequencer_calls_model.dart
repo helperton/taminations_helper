@@ -29,6 +29,7 @@ import '../call_entry.dart';
 import '../call_index.dart';
 import '../common_flutter.dart';
 import 'call_error.dart';
+import 'call_suggestions.dart';
 
 class SequencerCallsModel extends fm.ChangeNotifier {
 
@@ -40,6 +41,10 @@ class SequencerCallsModel extends fm.ChangeNotifier {
 
   var callsSelected = <CallEntry>[];
   var validCalls = <String>[];
+  //  SPIKE: the calls that follow best from here, best first, and the sequence they were
+  //  ranked for (so they are only worked out again when it changes)
+  var bestFromHere = <String>[];
+  String? _rankedFor;
 
   final _levelsSelected = <LevelData, bool>{
     LevelData.MS: false,
@@ -74,6 +79,25 @@ class SequencerCallsModel extends fm.ChangeNotifier {
     }
   }
 
+  void computeBestFromHere() async {
+    final model = sequencerModel;
+    if (model == null)
+      return;
+    final sequence = model.calls.map((c) => c.name).join('\n');
+    if (sequence == _rankedFor)
+      return;
+    _rankedFor = sequence;
+    bestFromHere = [];
+    notifyListeners();
+    final job = _RankJob(model.animation.dancers,
+        model.contextFromCurrentFormation().dancers.map((d) => d.clone()).toList());
+    final ranked = await compute(_rankFromHere, job);
+    if (_rankedFor == sequence) {
+      bestFromHere = ranked;
+      notifyListeners();
+    }
+  }
+
 }
 
 class _ApplyCallContext {
@@ -93,12 +117,25 @@ class _ApplyCallContext {
 
 }
 
+class _RankJob {
+  final List<Dancer> history;
+  final List<Dancer> current;
+  final Map<String,List<AnimatedCall>> normalizedCallIndex = Words.normalizedCallIndex;
+  _RankJob(this.history, this.current);
+}
+
+List<String> _rankFromHere(_RankJob job) {
+  Words.normalizedCallIndex = job.normalizedCallIndex;
+  return rankFromHere(commonPhrases(), job.history, job.current)
+      .take(12).map((r) => r.$1).toList();
+}
+
 List<String> _canApplyCall(_ApplyCallContext ctx) {
   Words.normalizedCallIndex = ctx.normalizedCallIndex;
   var retval = <String>[];
   for (var call in ctx.callNames) {
     try {
-      _probeCall(call, ctx);
+      probeCall(call, ctx.dancers);
       retval.add(call);
     } on CallError {
       // fall through
@@ -109,8 +146,9 @@ List<String> _canApplyCall(_ApplyCallContext ctx) {
   return retval;
 }
 
-void _probeCall(String call, _ApplyCallContext actx) {
-    var ctx = CallContext.fromDancers(actx.dancers);
+//  Throws a CallError unless [call] dances cleanly from where [dancers] stand; returns the result
+CallContext probeCall(String call, List<Dancer> dancers) {
+    var ctx = CallContext.fromDancers(dancers);
     ctx.interpretCall(call);
     ctx.performCall(tryDoYourPart: false);
     if (!RegExp(r'move in|step|gnat|back\s*(up|away)', caseSensitive: false)
@@ -121,5 +159,6 @@ void _probeCall(String call, _ApplyCallContext actx) {
     ctx.matchStandardFormation();
     if (ctx.isCollision())
       throw CallError('Collision');
+    return ctx;
   }
 

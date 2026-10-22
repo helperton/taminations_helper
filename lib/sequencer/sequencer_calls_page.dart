@@ -57,9 +57,11 @@ class _SequencerCallsFrameState extends fm.State<SequencerCallsFrame> {
           builder: (context, model, _) {
             callsModel.setSequencerModel(model);
             callsModel.computeValidCalls();
+            callsModel.computeBestFromHere();
             return pp.Consumer<SequencerCallsModel>(
                 builder: (context, _, _) {
                   return fm.Column(children: [
+                    _BestFromHere(callsModel),
                     fm.Expanded(
                       child: fm.Container(
                         color: Color.LIGHTGRAY,
@@ -136,6 +138,34 @@ class _SequencerCallsFrameState extends fm.State<SequencerCallsFrame> {
 
 }
 
+
+//  SPIKE: the calls that follow best from here, tap to add one
+class _BestFromHere extends fm.StatelessWidget {
+  final SequencerCallsModel callsModel;
+  _BestFromHere(this.callsModel);
+
+  @override
+  fm.Widget build(fm.BuildContext context) => fm.Container(
+    width: double.infinity,
+    color: Color.LIGHTGRAY,
+    padding: fm.EdgeInsets.all(6),
+    child: fm.Column(
+      crossAxisAlignment: fm.CrossAxisAlignment.start,
+      children: [
+        fm.Text('Best from here', style: fm.TextStyle(fontSize: 18,
+            fontWeight: fm.FontWeight.bold, color: fm.Colors.black87)),
+        if (callsModel.bestFromHere.isEmpty)
+          fm.Text('Working them out…', style: fm.TextStyle(fontSize: 16, color: Color.GRAY))
+        else
+          fm.Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final call in callsModel.bestFromHere)
+              fm.ActionChip(
+                label: fm.Text(call, style: fm.TextStyle(fontSize: 15)),
+                onPressed: () => callsModel.sequencerModel?.loadOneCall(call)),
+          ]),
+      ]),
+  );
+}
 
 class _LevelCheckbox extends fm.StatefulWidget {
   final LevelData level;

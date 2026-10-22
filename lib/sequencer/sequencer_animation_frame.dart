@@ -40,6 +40,7 @@ class SequencerAnimationFrame extends fm.StatelessWidget {
           child: fm.Row(
             children: [
               _SequencerSettingsButton(),
+              _SequencerCallsButton(),
               CopyImageButton()  // from animation_page
             ]
           )
@@ -75,7 +76,8 @@ class PortraitSequencerAnimationFrame extends fm.StatelessWidget {
                         SequencerPasteButton(),
                         if (constraints.maxHeight > 50)
                           ...[fm.Divider(color: Color.GRAY, height: 8),
-                        _SequencerSettingsButton()]
+                        _SequencerSettingsButton(),
+                        _SequencerCallsButton()]
                       ]
                     );
                   }
