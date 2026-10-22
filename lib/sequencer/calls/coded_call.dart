@@ -74,7 +74,9 @@ import 'a2/transfer_and.dart';
 import 'a2/zig.dart';
 import 'a2/zig_zag.dart';
 import 'ms/allemande_left.dart';
+import 'ms/allemande_right.dart';
 import 'ms/around_to_a_line.dart';
+import 'ms/arm_turn.dart';
 import 'ms/bend_the_line.dart';
 import 'ms/california_twirl.dart';
 import 'ms/chain.dart';
@@ -376,6 +378,8 @@ abstract class CodedCall extends Call {
     'Adjust(to)?.*'.ri: (name) => Adjust(name),
     'All8(?!Circulate)(?!Recycle)'.ri: (name) => AllEight(name),
     'AllemandeLeft'.ri: (name) => AllemandeLeft(name),
+    'AllemandeRight'.ri: (name) => AllemandeRight(name),
+    '(Left|Right)ArmTurn(14|12|34)?'.ri: (name) => ArmTurn(name),
     'AlterAndCirculate'.ri: (name) => AlterAndCirculate(name),
     'AlterTheWave'.ri: (name) => AlterTheWave(name),
     'and'.ri: (name) => And(name),
