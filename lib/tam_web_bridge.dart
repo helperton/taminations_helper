@@ -146,7 +146,7 @@ class TamWebBridge {
   Map<String, dynamic> _state() {
     final model = _model;
     if (model == null) return {'ok': false, 'error': 'sequencer not ready'};
-    final ctx = model.contextFromAnimation()..analyze();
+    final ctx = model.contextFromCurrentFormation()..analyze();
     return {
       'callCount': model.calls.length,
       'calls': model.calls.map((c) => c.name).toList(),

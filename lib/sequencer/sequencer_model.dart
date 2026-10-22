@@ -1,7 +1,7 @@
 /*
 
   Taminations Square Dance Animations
-  Copyright (C) 2026 Brad Christie
+  Copyright (C) 2024 Brad Christie
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ class SequencerModel extends fm.ChangeNotifier {
 
   List<SequencerCall> calls = [];
   List<SequencerCall> _savedCalls = [];
-  String _startingFormation = 'Squared Set'; // overridden by Settings
+  String _startingFormation = 'Squared Set'; // overriden by Settings
   String _savedStartingFormation = '';
   String get startingFormation => _startingFormation;
   String partString = '';
@@ -309,7 +309,7 @@ class SequencerModel extends fm.ChangeNotifier {
       if (!isComment(lastCall.name)) {
         var totalBeats = calls.fold<double>(0.0,(a,b) => a + b.beats);
         for (var d in animation.dancers) {
-          while (d.path.beats.isGreaterThan(totalBeats,delta: 0.01))
+          while (d.path.beats.isGreaterThan(totalBeats))
             d.path.pop();
         }
       }
@@ -402,7 +402,10 @@ class SequencerModel extends fm.ChangeNotifier {
     return null;
   }
 
-  CallContext contextFromAnimation() {
+  /// Public accessor for formation-aware call filtering in the calls panel.
+  CallContext contextFromCurrentFormation() => _contextFromAnimation();
+
+  CallContext _contextFromAnimation() {
     final formationName = _validFormationName(startingFormation);
     _startingFormation = formationName;
     var ctx = CallContext.fromFormation(Formation(formationName));
@@ -443,11 +446,14 @@ class SequencerModel extends fm.ChangeNotifier {
         animation.dancers[i].path += ctx.dancers[i].path;
     }
     animation.recalculate();
+    /*
+    for (var d in animation.dancers) {
+      var a = d.orbitAngle(animation.beats).toDegrees.s;
+      print('Orbit Angle $d = $a');
+    } */
   }
 
   void _interpretOneLine(String line) {
-    //  Remove quotes
-    line = line.replaceAll('[\'"]'.ri, '');
     //  Replace abbreviations
     line = AbbreviationsModel.replaceAbbreviations(line);
     //  Remember the current beat, we will animate from here
@@ -462,6 +468,11 @@ class SequencerModel extends fm.ChangeNotifier {
     //  the newlines were simply ignored. Whatever Copy produces, paste it back and it is taken.
     for (var oneCall in line.split('[\n;]'.r))
       _interpretOneCall(oneCall);
+    //  Play whatever has been added
+    if (animation.beats > animateFrom) {
+      animation.goToBeat(animateFrom);
+      animation.doPlay();
+    }
   }
 
   void _interpretOneCall(String call) {
@@ -505,7 +516,7 @@ class SequencerModel extends fm.ChangeNotifier {
 
     else {
       var prevbeats = animation.beats;
-      var cctx = contextFromAnimation();
+      var cctx = _contextFromAnimation();
       cctx.interpretCall(call);
       cctx.performCall(tryDoYourPart: true);
       if (!cctx.callname.contains('(move in|step|gnat|back\\s*(up|away))'.ri))
@@ -543,15 +554,11 @@ class SequencerModel extends fm.ChangeNotifier {
             level: cctx.level));
         _updateParts();
         _savedCalls = [];
-      } else {
-        errorString = 'That did not do anything';
       }
-      //  Play whatever has been added
-      animation.goToBeat(animateFrom);
-      animation.doPlay();
       later(() {
         notifyListeners();
       });
+
     }
   }
 

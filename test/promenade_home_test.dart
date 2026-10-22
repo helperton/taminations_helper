@@ -104,7 +104,7 @@ void main() async {
     final model = await danced(ending);
     expect(model.errorString, '', reason: '"$ending" should dance');
 
-    final ctx = model.contextFromAnimation();
+    final ctx = model.contextFromCurrentFormation();
     ctx.analyze();
     final girls = ctx.dancers.where((d) => d.gender == Gender.GIRL).toList();
     return {

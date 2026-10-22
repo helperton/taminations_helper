@@ -28,13 +28,19 @@ import 'bezier.dart';
 import 'hands.dart';
 import 'matrix.dart';
 
+
+class MyBezier {
+  const MyBezier(List<Vector> points);
+}
+
+
 class Movement extends Cloneable<Movement> {
 
-  double beats;
-  int hands;
-  Bezier btranslate;
-  Bezier brotate;
-  bool fromCall;  // for sequencer
+  final double beats;
+  final int hands;
+  final Bezier btranslate;
+  final Bezier brotate;
+  final bool fromCall;  // for sequencer
 
   /// Constructor for a movement where the dancer does not face the direction
   ///   of travel.  Two Bezier curves are used, one for travel and one for
@@ -44,7 +50,7 @@ class Movement extends Cloneable<Movement> {
   /// @param hands  One of the const ints above
   /// @param btranslate  Bezier curve for movement
   /// @param brotate  Bezier curve for facing direction, can be same as btranslate
-  Movement(this.beats, this.hands,
+  const Movement(this.beats, this.hands,
       this.btranslate, this.brotate, {this.fromCall=true});
 
   /// Construct a Movement from the attributes of an XML movement
@@ -70,7 +76,7 @@ class Movement extends Cloneable<Movement> {
     return Movement(beats,hands,bt,br);
   }
 
-  factory Movement.fromData({
+   Movement.fromData({
     required double beats,
     int hands = Hands.NOHANDS,
     required double cx1,
@@ -84,12 +90,19 @@ class Movement extends Cloneable<Movement> {
     double cy4 = 0.0,
     double x4 = 0.0,
     double y4 = 0.0
-  }) {
-    final bt = Bezier([[0.0,0.0].v,[cx1,cy1].v,[cx2,cy2].v,[x2,y2].v]);
-    final br = cx3 < 0.0 ? bt :
-        Bezier([[0.0,0.0].v,[cx3,0.0].v,[cx4,cy4].v,[x4,y4].v]);
-    return Movement(beats,hands,bt,br);
-  }
+  }) : this(beats,hands,
+       Bezier([Vector(0,0),Vector(cx1,cy1),Vector(cx2,cy2),Vector(x2,y2)]),
+  cx3 < 0.0
+      ?  Bezier([Vector(0,0),Vector(cx1,cy1),Vector(cx2,cy2),Vector(x2,y2)])
+      :  Bezier([Vector(0,0),Vector(cx3,0),Vector(cx4,cy4),Vector(x4,y4)])
+  );
+
+  const Movement.fromData2(
+      double beats,
+      int hands,
+      Bezier bt,
+      [Bezier? br]
+      ) : this(beats,hands,bt,br ?? bt);
 
   //  Construct a Movement that can move from one point to another
   //  point along a straight line, and can turn a specific angle,
@@ -154,17 +167,19 @@ class Movement extends Cloneable<Movement> {
   Movement skew(double x, double y) =>
       Movement(beats,hands,btranslate.skew(x, y), brotate, fromCall: fromCall);
 
-  /// Return a new Movement with the final facing position turned
-  /// by a specific radians
+  /// Return a new Movement with the final facing position
+  /// turned by a specific radians
   Movement twist(double adif) {
-    if (adif.abs() < 0.01)
-      return clone();
-    var a = brotate.angle(1.0) + adif;
-    var p1 = Vector(0,0);
-    var cp1 = Vector(0.55,0);
-    var p2 = Vector(sin(a)*a.sign,(1-cos(a))*a.sign);
-    var cp2 = p2 - Vector(0.55*cos(a),0.55*sin(a));
-    var brot = Bezier([p1,cp1,cp2,p2]);
+    //  The current final angle is set by the end point
+    //  and 2nd control point of the rotation bezier
+    var a0 = (brotate.p2 - brotate.cp2).angle;
+    //  Adjust by turning this angle
+    a0 = a0 + adif;
+    //  Keep the same distance between p2 and cp2
+    var len = (brotate.p2 - brotate.cp2).length;
+    //  Compute the new position of cp2 from the adjusted angle
+    var cp2new = brotate.p2 - Vector(len,0).rotate(a0);
+    var brot = Bezier([brotate.p1,brotate.cp1,cp2new,brotate.p2]);
     return Movement(beats,hands,btranslate,brot,fromCall:fromCall);
   }
 
@@ -185,7 +200,8 @@ class Movement extends Cloneable<Movement> {
         fromCall: fromCall);
   }
 
-  bool isStand() => btranslate.isIdentity() && brotate.isIdentity();
+  bool isStand() => btranslate.isIdentity() &&
+      brotate.angle(1.0).isAround(0);
 
   XmlElement toXML()  => XmlElement('movement'.xml,<XmlAttribute>[
     XmlAttribute('hands'.xml, Hands.getName(hands)),

@@ -65,19 +65,25 @@ Promenade Corner''';
       super.performCall(ctx);
       ctx.applyCalls('Half Wheel Around');
       ctx.adjustToFormation(Formation('Squared Set'));
-      ctx.level = LevelData.B1;
+      ctx.level = LevelData.MS;
       return;
     }
-    if (!name.endsWith('Home') && !name.contains('Corner') && !name.contains('Partner'))
+    if (!name.endsWith('Home') && !name.contains('Corner')
+        && !name.contains('Right') && !name.contains('Partner'))
       throw CallError('Use either Promenade Home or Promenade <fraction>');
     if (ctx.dancers.length != 8)
       throw CallError('Only for 4 couples at this point.');
     //   Compute the center point of each couple
     _startPoints = [1, 2, 3, 4].map((coupleNumber) {
-      var couple = ctx.dancers.where((d) =>
-      (d.gender == Gender.GIRL && name.contains('Corner'))
-          ? (d.numberCouple.i % 4 + 1 == coupleNumber)
-          : d.numberCouple.i == coupleNumber).toList();
+      var couple = ctx.dancers.where((d) {
+        if (d.gender == Gender.GIRL) {
+          if (name.contains('Corner'))
+            return d.numberCouple.i % 4 + 1 == coupleNumber;
+          else if (name.contains('Right'))
+            return (d.numberCouple.i + 2) % 4 + 1 == coupleNumber;
+        }
+        return d.numberCouple.i == coupleNumber;
+      }).toList();
       var boy = couple[0];
       var girl = couple[1];
       var center = (boy.location + girl.location) / 2.0;
@@ -119,7 +125,7 @@ Promenade Corner''';
     //  Adjust from promenade to squared set
     ctx.applyCalls('Half Wheel Around');
     ctx.adjustToFormation(Formation('Squared Set'));
-    ctx.level = LevelData.B1;  // otherwise Counter Rotate would set to C-1
+    ctx.level = LevelData.MS;  // otherwise Counter Rotate would set to C-1
   }
 
   @override
@@ -133,14 +139,18 @@ Promenade Corner''';
       var targetAngle = homeVec.angle + pi / 2.0;
       return ctx.moveToPosition(d, targetLocation, targetAngle);
     }
-    var num = (d.gender == Gender.GIRL && name.contains('Corner'))
-        ? d.numberCouple.i % 4 + 1
-        : d.numberCouple.i;
+    var num = d.numberCouple.i;
+    if (d.gender == Gender.GIRL) {
+      if (name.contains('Corner'))
+        num = d.numberCouple.i % 4 + 1;
+      else if (name.contains('Right'))
+        num = (d.numberCouple.i + 2) % 4 + 1;
+    }
     var startCouple = _startPoints[num-1];
     var startLocation = startCouple * (d.gender == Gender.BOY ? 1.0 : 1.5);
     var startAngle = startCouple.angle + pi/2;
     var extraMoves = Path();
-    if (name.contains('Swing') && (name.contains('Corner') || name.contains('Partner'))) {
+    if (name.contains('Swing')) {
       startAngle = d.gender == Gender.BOY
           ? startCouple.angle
           : startCouple.angle + pi;

@@ -40,8 +40,8 @@ class SettingsFrame extends fm.StatelessWidget {
 
   @override
   fm.Widget build(fm.BuildContext context) {
-    return pp.Consumer2<Settings,TitleModel>(
-        builder: (context, settings, titleModel, child) {
+    return pp.Consumer<TitleModel>(
+        builder: (context, titleModel, child) {
           titleModel.title = 'Settings';
           return fm.Container(
               color: Color.LIGHTGREY,
@@ -515,7 +515,7 @@ class StartingFormationDropdownWidget extends fm.StatelessWidget {
                   'Facing Couples',
                   'Squared Set',
                   'Normal Lines',
-                  'Zero Box',
+                  'Corner Box',
                   'Double Pass Thru',
                   'Ocean Waves',
                   'Two-Faced Lines',

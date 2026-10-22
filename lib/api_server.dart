@@ -828,7 +828,7 @@ class TamHelperApiServer {
       }
 
       // Snapshot detected formation + measured beats for this call (same detection as /state).
-      final ctx = model.contextFromAnimation();
+      final ctx = model.contextFromCurrentFormation();
       ctx.analyze();
       String? detectedFormation;
       if (ctx.isSquare()) detectedFormation = 'Squared Set';
@@ -859,7 +859,7 @@ class TamHelperApiServer {
     }
 
     try {
-      final ctx = model.contextFromAnimation();
+      final ctx = model.contextFromCurrentFormation();
       ctx.analyze();
 
       final dancers = <Map<String, dynamic>>[];

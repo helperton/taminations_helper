@@ -20,12 +20,13 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart' as fm;
 import 'package:provider/provider.dart' as pp;
+import 'package:taminations/call_entry.dart';
+import 'package:taminations/sequencer/sequencer_model.dart';
 
-import '../call_entry.dart';
-import '../call_index.dart';
 import '../common_flutter.dart';
 import '../pages/calls_page.dart';
 import '../pages/page.dart';
+import 'sequencer_calls_model.dart';
 
 class SequencerCallsPage extends fm.StatelessWidget {
 
@@ -41,85 +42,96 @@ class SequencerCallsFrame extends fm.StatefulWidget {
   _SequencerCallsFrameState createState() => _SequencerCallsFrameState();
 }
 
-class SequencerCallsModel extends fm.ChangeNotifier {
-
-  var callsSelected = <CallEntry>[];
-  final _levelsSelected = <LevelData,bool>{
-    LevelData.SSD : false,
-    LevelData.B1 : false,
-    LevelData.B2 : false,
-    LevelData.MS : false,
-    LevelData.PLUS : false,
-    LevelData.A1 : false,
-    LevelData.A2 : false,
-    LevelData.C1 : false,
-    LevelData.C2 : false,
-    LevelData.C3A : false
-  };
-  bool levelSelected(LevelData level) => _levelsSelected[level]!;
-
-  void setSelected(LevelData level, bool value) {
-    if (_levelsSelected[level] != value) {
-      _levelsSelected[level] = value;
-      callsSelected = callIndex.where((element) =>
-      _levelsSelected[LevelData.find(element.link)] ?? false).toList();
-      notifyListeners();
-    }
-  }
-
-}
-
 
 class _SequencerCallsFrameState extends fm.State<SequencerCallsFrame> {
 
   final callsModel = SequencerCallsModel();
+  var scrollController = fm.ScrollController();
 
   @override
   fm.Widget build(fm.BuildContext context) {
+    scrollController = fm.ScrollController();
     return pp.ChangeNotifierProvider.value(
       value: callsModel,
-      child: pp.Consumer<SequencerCallsModel>(
-        builder: (context,_,__) {
-          return fm.Column(children: [
-              fm.Expanded(child: fm.GridView.builder(
-                gridDelegate: fm.SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    mainAxisSpacing: 1,
-                    childAspectRatio: 8
-                ),
-                itemCount: callsModel.callsSelected.length,
-                itemBuilder: (_,index) =>
-                fm.Container(
-                child: fm.Material(
-                //  Color the item according the the level
-                color: LevelData.find(callsModel.callsSelected[index].link)!.color,
-                child: fm.Text(callsModel.callsSelected[index].title,
-                    style: fm.TextStyle(fontSize: 16))
-                )
-                )
+      child: pp.Consumer<SequencerModel>(
+          builder: (context, model, _) {
+            callsModel.setSequencerModel(model);
+            callsModel.computeValidCalls();
+            return pp.Consumer<SequencerCallsModel>(
+                builder: (context, _, _) {
+                  return fm.Column(children: [
+                    fm.Expanded(
+                      child: fm.Container(
+                        color: Color.LIGHTGRAY,
+                        child: fm.Scrollbar(
+                            controller: scrollController,
+                            thumbVisibility: TamUtils.platform().matches('web|windows'.r),
+                            thickness: 16,
+                            child: fm.GridView.builder(
+                                gridDelegate: fm.SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 20,
+                                    mainAxisSpacing: 1,
+                                    childAspectRatio: 0.1
+                                ),
+                                controller: scrollController,
+                                scrollDirection: fm.Axis.horizontal,
+                                padding: fm.EdgeInsets.fromLTRB(0, 0, 0, 20),
+                                itemCount: callsModel.callsSelected.length,
+                                itemBuilder: (_, index) => itemBuilder(callsModel, callsModel.callsSelected[index])
 
-              )),
-            fm.Row(children: [
-              _LevelCheckbox(LevelData.SSD),
-              _LevelCheckbox(LevelData.PLUS),
-              _LevelCheckbox(LevelData.C1)
-            ]),
-            fm.Row(children: [
-              _LevelCheckbox(LevelData.B1),
-              _LevelCheckbox(LevelData.A1),
-              _LevelCheckbox(LevelData.C2)
-            ]),
-            fm.Row(children: [
-              _LevelCheckbox(LevelData.B2),
-              _LevelCheckbox(LevelData.A2),
-              _LevelCheckbox(LevelData.C3A)
-            ]),
-            fm.Row(children: [
-              _LevelCheckbox(LevelData.MS),
-            ])
-          ]);
-        } ),
+                            )),
+                      ),
+                    ),
+                    fm.Row(children: [
+                      _LevelCheckbox(LevelData.MS),
+                      _LevelCheckbox(LevelData.C1)
+                    ]),
+                    fm.Row(children: [
+                      _LevelCheckbox(LevelData.PLUS),
+                      _LevelCheckbox(LevelData.C2)
+                    ]),
+                    fm.Row(children: [
+                      _LevelCheckbox(LevelData.A1),
+                      _LevelCheckbox(LevelData.C3A)
+                    ]),
+                    fm.Row(children: [
+                      _LevelCheckbox(LevelData.A2),
+                      _LevelCheckbox(LevelData.C3B)
+                    ]),
+                  ]);
+                }
+            );
+          }),
     );
+  }
+
+  fm.Widget itemBuilder(SequencerCallsModel callModel, CallEntry entry) {
+    if (callModel.validCalls.contains(entry.title)) {
+      return fm.Container(
+        child: fm.Material(
+          color: LevelData.find(entry.link)!.color,
+          child: fm.InkWell(
+            onTap: () {
+              callModel.sequencerModel?.loadOneCall(entry.title);
+            },
+            child: fm.Text(entry.title,style: fm.TextStyle(
+                fontSize: 16,
+              color: Color.RED
+            ))
+          )
+        )
+      );
+    } else {
+      return fm.Container(
+        child: fm.Material(
+          color: LevelData.find(entry.link)!.color,
+          child: fm.Text(entry.title,style: fm.TextStyle(
+              fontSize: 16,
+            color: Color.GRAY
+          )),
+        ),
+      );
+    }
   }
 
 }

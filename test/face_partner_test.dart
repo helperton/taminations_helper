@@ -56,7 +56,7 @@ void main() async {
   }
 
   CallContext floor(SequencerModel model) {
-    final ctx = model.contextFromAnimation();
+    final ctx = model.contextFromCurrentFormation();
     ctx.analyze();
     return ctx;
   }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:taminations/animated_call.dart';
 import 'package:taminations/call_index.dart';
 import 'package:taminations/math/hands.dart';
 
@@ -11,7 +12,7 @@ void main() {
     final allCalls = <Map<String, dynamic>>[];
 
     for (final entry in callIndex) {
-      for (final ac in entry.calls) {
+      for (final ac in flattenAnimatedCallList(entry.calls)) {
         final key = '${entry.title}|${ac.from}|${entry.level}';
         if (seen.contains(key)) continue;
         seen.add(key);
