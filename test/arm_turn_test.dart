@@ -337,6 +337,14 @@ void main() async {
     });
   });
 
+  testWidgets('Allemande Right away from home and with no star says where it works from',
+      (tester) async {
+    await tester.runAsync(() async {
+      final model = await danced('Heads Square Thru 4\nRight Allemande');
+      expect(model.errorString, contains('from a squared set or out of a star'));
+    });
+  });
+
   //  Turn Partner (by the) Left / Right is the partner allemande by that hand.
   for (final (said, meant) in [
     ('Turn Partner Left', 'Allemande Left Partner'),

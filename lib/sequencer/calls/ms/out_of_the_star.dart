@@ -29,11 +29,11 @@ final _homeSpots = CallContext.fromFormation(Formation('Squared Set'))
 
 bool onAHomeSpot(Dancer d) => _homeSpots.any((s) => s.isAbout(d.location));
 
-//  Four on home spots and the other four in the middle
+//  Four on home spots and the other four in a star in the middle, one from the center
 bool isStarInTheMiddle(CallContext ctx) =>
     ctx.dancers.length == 8 &&
     ctx.dancers.where(onAHomeSpot).length == 4 &&
-    ctx.dancers.where((d) => !onAHomeSpot(d)).every((d) => d.location.length < 2.0);
+    ctx.dancers.where((d) => !onAHomeSpot(d)).every((d) => d.location.length.isAbout(1.0));
 
 //  Each pair meet just inside the home line and turn 1/2 by the [isLeft] hand. Then everyone
 //  steps on to their own home spot and faces whoever [finishFacing] names.

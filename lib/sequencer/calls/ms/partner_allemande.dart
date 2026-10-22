@@ -46,9 +46,11 @@ Either works with one of each couple coming out of a star in the middle.''';
     if (ctx.actives.every(onAHomeSpot)) {
       ctx.applyCalls('Face Partner', '$whichWay Arm Turn');
       _faceOnTheStep(ctx);
-    } else
+    } else if (isStarInTheMiddle(ctx))
       allemandeOutOfTheStar(ctx, name, isLeft: isLeft,
           turnWith: ctx.originalPartner, finishFacing: ctx.originalCorner);
+    else
+      throw CallError('$name is from a squared set or out of a star');
   }
 
   //  Face Partner is a turn on the spot. Fold it into the first step of the arm turn so
