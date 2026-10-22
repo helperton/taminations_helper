@@ -58,6 +58,26 @@ import '../../moves.dart';
           SwingRight
       ]),
 
+    //  Four at alternate spots of a squared set facing around it, the center on their right,
+    //  as the ladies are after an Allemande Left. Veer in to the star spot just inside.
+    AnimatedCall('Right Hand Star',
+      formation:Formation('', dancers:[
+        Dancer.fromData(gender:Gender.GIRL,x:-3,y:-1,angle:90),
+        Dancer.fromData(gender:Gender.GIRL,x:1,y:-3,angle:180),
+  ]),
+      from:'Around the Set',noDisplay: true,
+      paths:[
+          Path([Movement.fromData(beats: 2, hands: Hands.NONE,
+              cx1: 0.5, cy1: 0, cx2: 0.5, cy2: -2, x2: 1, y2: -2)]) +
+          SwingRight +
+          SwingRight,
+
+          Path([Movement.fromData(beats: 2, hands: Hands.NONE,
+              cx1: 0.5, cy1: 0, cx2: 0.5, cy2: -2, x2: 1, y2: -2)]) +
+          SwingRight +
+          SwingRight
+      ]),
+
     AnimatedCall('Left Hand Star',
       formation:Formation('Facing Couples Compact'),
       from:'Facing Couples',
@@ -88,6 +108,26 @@ import '../../moves.dart';
           SwingLeft,
 
           Forward.changeBeats(1.5) +
+          SwingLeft +
+          SwingLeft
+      ]),
+
+    //  Four at alternate spots of a squared set facing around it, the center on their left,
+    //  as the men are after an Allemande Left. Veer in to the star spot just inside.
+    AnimatedCall('Left Hand Star',
+      formation:Formation('', dancers:[
+        Dancer.fromData(gender:Gender.BOY,x:-3,y:1,angle:270),
+        Dancer.fromData(gender:Gender.BOY,x:-1,y:-3,angle:0),
+  ]),
+      from:'Around the Set',noDisplay: true,
+      paths:[
+          Path([Movement.fromData(beats: 2, hands: Hands.NONE,
+              cx1: 0.5, cy1: 0, cx2: 0.5, cy2: 2, x2: 1, y2: 2)]) +
+          SwingLeft +
+          SwingLeft,
+
+          Path([Movement.fromData(beats: 2, hands: Hands.NONE,
+              cx1: 0.5, cy1: 0, cx2: 0.5, cy2: 2, x2: 1, y2: 2)]) +
           SwingLeft +
           SwingLeft
       ]),

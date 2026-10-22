@@ -44,7 +44,7 @@ Face Partner of the Moment turns you to look at whoever you are paired with righ
 
   @override
   Path performOne(Dancer d, CallContext ctx) {
-    final target = _ofTheMoment ? d.data.partner : _originalPartner(d, ctx);
+    final target = _ofTheMoment ? d.data.partner : ctx.originalPartner(d);
     if (target == null) {
       throw CallError(_ofTheMoment
           ? 'Dancer $d is not paired with anyone to face.'
@@ -52,18 +52,6 @@ Face Partner of the Moment turns you to look at whoever you are paired with righ
     }
     //  Turn on the spot to look at them: same place, new facing.
     return ctx.moveToPosition(d, d.location, (target.location - d.location).angle);
-  }
-
-  //  The one you came in with — same couple number, other gender.
-  Dancer? _originalPartner(Dancer d, CallContext ctx) {
-    for (final other in ctx.dancers) {
-      if (other != d &&
-          other.numberCouple == d.numberCouple &&
-          other.gender != d.gender) {
-        return other;
-      }
-    }
-    return null;
   }
 
 }

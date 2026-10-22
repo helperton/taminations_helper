@@ -235,6 +235,39 @@ import '../../moves.dart';
           LeadRight.changeBeats(2).skew(0.0,0.5)
       ]),
 
+    //  At home facing your corner, as a Right Arm Turn or Allemande Right leaves you.
+    //  Turn the corner and step back home, turning on the way to face your partner — exactly
+    //  45 degrees, so calling it again and again never drifts.
+    AnimatedCall('Allemande Left',
+      formation:Formation('', dancers:[
+        Dancer.fromData(gender:Gender.BOY,x:-3,y:1,angle:45),
+        Dancer.fromData(gender:Gender.GIRL,x:-3,y:-1,angle:-45),
+        Dancer.fromData(gender:Gender.BOY,x:-1,y:-3,angle:135),
+        Dancer.fromData(gender:Gender.GIRL,x:1,y:-3,angle:45),
+  ]),
+      from:'Facing Corners',isGenderSpecific:true,noDisplay: true,
+      paths:[
+          ExtendRight.changeBeats(1.5).scale(1.414,0.5) +
+          SwingLeft.scale(0.5,0.5) +
+          Path([Movement.fromTransform(
+              Matrix.getTranslation(1.414,0.5) * Matrix.getRotation(45.0.toRadians), beats:1.5)]),
+
+          ExtendRight.changeBeats(1.5).scale(1.414,0.5) +
+          SwingLeft.scale(0.5,0.5) +
+          Path([Movement.fromTransform(
+              Matrix.getTranslation(1.414,0.5) * Matrix.getRotation(-45.0.toRadians), beats:1.5)]),
+
+          ExtendRight.changeBeats(1.5).scale(1.414,0.5) +
+          SwingLeft.scale(0.5,0.5) +
+          Path([Movement.fromTransform(
+              Matrix.getTranslation(1.414,0.5) * Matrix.getRotation(45.0.toRadians), beats:1.5)]),
+
+          ExtendRight.changeBeats(1.5).scale(1.414,0.5) +
+          SwingLeft.scale(0.5,0.5) +
+          Path([Movement.fromTransform(
+              Matrix.getTranslation(1.414,0.5) * Matrix.getRotation(-45.0.toRadians), beats:1.5)])
+      ]),
+
     AnimatedCall('Allemande Left',
       formation:Formation('', dancers:[
         Dancer.fromData(gender:Gender.BOY,x:-2.45,y:1,angle:0),

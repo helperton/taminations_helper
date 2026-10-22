@@ -1155,6 +1155,51 @@ class CallContext {
     var d2 = dancerInFront(d);
     return d2 != null && dancerInFront(d2) == d ? d2 : null;
   }
+  //  Where a dancer stands at home in the squared set (or, with just two couples, in their
+  //  facing couples), and the way they face there
+  (Vector, double) home(Dancer d) {
+    var xhome = 0.0;
+    if (dancers.length == 4)
+      xhome = (d.numberCouple == '1' ) ? -2.0 : 2.0;
+    else if ('12' .contains(d.number))
+      xhome = -3.0;
+    else if ('38' .contains(d.number))
+      xhome = -1.0;
+    else if ('47' .contains(d.number))
+      xhome = 1.0;
+    else if ('56' .contains(d.number))
+      xhome = 3.0;
+
+    var yhome = 0.0;
+    if (dancers.length == 4)
+      yhome = ((d.numberCouple=='1' ) ^ (d.gender==Gender.GIRL)) ? 1.0 : -1.0;
+    else if ('16' .contains(d.number))
+      yhome = 1.0;
+    else if ('25' .contains(d.number))
+      yhome = -1.0;
+    else if ('34' .contains(d.number))
+      yhome = -3.0;
+    else if ('78' .contains(d.number))
+      yhome = 3.0;
+
+    //  And the angle dancer faces when standing at home
+    var ahome = 0.0;
+    if (dancers.length == 4)
+      ahome = (d.numberCouple == '1' ) ? 0.0 : pi;
+    else if ('12' .contains(d.number))
+      ahome = 0.0;
+    else if ('34' .contains(d.number))
+      ahome = pi/2;
+    else if ('56' .contains(d.number))
+      ahome = pi;
+    else if ('78' .contains(d.number))
+      ahome = pi*3/2;
+    return ([xhome,yhome].v, ahome);
+  }
+
+  //  Return the dancer's original partner — the other half of their couple — wherever they are
+  Dancer? originalPartner(Dancer d) => dancers.firstWhereOrNull((d2) =>
+      d2 != d && d2.numberCouple == d.numberCouple && d2.gender != d.gender);
 
   //  Return dancers that are in between two other dancers
   List<Dancer> inBetween(Dancer d1, Dancer d2) =>

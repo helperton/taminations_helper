@@ -25,7 +25,8 @@ import '../common.dart';
 //  1/2 lets go and steps on, like Allemande Left: a Turn Thru. In a squared set it is the
 //  mirror of Allemande Left — where that leaves you squarely facing your partner, this
 //  leaves you squarely facing the dancer diagonally ahead (your corner, after a right arm
-//  turn with your partner), so each dancer turns on the spot to face them.
+//  turn with your partner). The step on carries that turn, so dancers arrive already
+//  facing them, the way Allemande Left arrives facing your partner.
 //
 //  1/4 and 3/4 finish holding on in a mini-wave. 3/4 is a half to a wave and a Hinge.
 //  1/4 has no half to start from, so it needs a mini-wave — facing dancers step to one
@@ -52,21 +53,34 @@ With no amount it turns 1/2 and steps on, like Allemande Left.
     else {
       ctx.applyCalls('$left Turn Thru');
       if (ctx.isSquare())
-        super.performCall(ctx);  // square up: performOne below
+        _squareUpOnTheStep(ctx);
     }
     ctx.level = LevelData.MS;  // Turn Thru is Plus; an arm turn is not
   }
 
-  //  Turn on the spot to face the dancer diagonally ahead.
-  @override
-  Path performOne(Dancer d, CallContext ctx) {
-    final ahead = ctx.dancers
-        .where((o) => o != d && d.angleToDancer(o).abs() < pi/4 + 0.1)
-        .fold<Dancer?>(null, (best, o) =>
-            best == null || d.distanceTo(o) < d.distanceTo(best) ? o : best);
-    if (ahead == null)
-      return Path();
-    return ctx.moveToPosition(d, d.location, (ahead.location - d.location).angle);
+  //  Re-make each dancer's last step (Turn Thru's step on) as one movement to the same spot
+  //  that also turns them to face the dancer diagonally ahead.
+  void _squareUpOnTheStep(CallContext ctx) {
+    //  Who is diagonally ahead, from where everyone has stepped to.
+    final turns = <Dancer, double>{};
+    for (final d in ctx.actives) {
+      final ahead = ctx.dancers
+          .where((o) => o != d && d.angleToDancer(o).abs() < pi/4 + 0.1)
+          .fold<Dancer?>(null, (best, o) =>
+              best == null || d.distanceTo(o) < d.distanceTo(best) ? o : best);
+      if (ahead != null)
+        turns[d] = (ahead.location - d.location).angle.angleDiff(d.tx.angle);
+    }
+    for (final entry in turns.entries) {
+      final d = entry.key;
+      final moves = d.path.movelist;
+      final step = moves.last;
+      final stepTx = Path([step]).computeTransformList().last;
+      final stepAndTurn = Movement.fromTransform(stepTx * Matrix.getRotation(entry.value),
+          beats: step.beats, hands: step.hands);
+      d.path = Path([...moves.sublist(0, moves.length - 1), stepAndTurn]);
+      d.animateToEnd();
+    }
   }
 
   void _quarter(CallContext ctx) {

@@ -100,7 +100,7 @@ String normalizeCall(String callname) =>
         .replaceAll('\\bsquare thru 34\\b'.ri,'Square Thru 3')
         .replaceAll('(all 8|column|couples) Circulate'.ri,'Circulate')
         .replaceAll('\\ballamande?\\b'.ri,'Allemande')
-        .replaceAll('left\\s*allemande'.ri,'Allemande Left')
+        .replaceAllMapped('(left|right)\\s*allemande'.ri, (m) => 'Allemande ${m[1]!.capitalize()}')
         .replaceAllMapped('\\bstar (right|left)\\b'.ri, (m) => '${m[1]} Hand Star')
         .replaceAllMapped('interlocked (flip|cut) the'.ri,
             (m) => '${m[1]} the Interlocked')

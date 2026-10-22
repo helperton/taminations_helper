@@ -113,6 +113,16 @@ void main() async {
     });
   });
 
+  //  Dancers turn to their corner as they step on, not standing still after it: no extra
+  //  beats on top of the Turn Thru it is built from.
+  testWidgets('the squaring up happens during the step, not after it', (tester) async {
+    await tester.runAsync(() async {
+      final armTurn = await danced('$facingPartners\nRight Arm Turn');
+      final turnThru = await danced('$facingPartners\nTurn Thru');
+      expect(armTurn.calls.last.beats, turnThru.calls.last.beats);
+    });
+  });
+
   testWidgets('outside a squared set the 1/2 dances just like Turn Thru', (tester) async {
     await tester.runAsync(() async {
       const box = 'Heads Square Thru 4';
@@ -212,11 +222,117 @@ void main() async {
     });
   });
 
-  testWidgets('Allemande Right sets up an Allemande Left', (tester) async {
+  //  Turning to face your partner happens as you step in, never as a stop on the spot first:
+  //  Allemande Right takes no longer than the Right Arm Turn it is built on.
+  for (final before in ['Allemande Left\n', ''])
+  testWidgets('Allemande Right ${before.isEmpty ? 'from a squared set' : 'after an Allemande Left'}'
+      ' does not pause to face partner', (tester) async {
     await tester.runAsync(() async {
-      final model = await danced('Allemande Right\nAllemande Left');
+      final armTurn = await danced('Allemande Left\nRight Arm Turn');
+      final model = await danced('${before}Allemande Right');
       expect(model.errorString, '');
-      expect(model.callNames, ['Allemande Right', 'Allemande Left']);
+      expect(model.calls.last.beats, armTurn.calls.last.beats);
+    });
+  });
+
+  //  Facing your corner at home, Allemande Left turns them and brings you back home to face
+  //  your partner — exactly where an Allemande Left from the squared set leaves you.
+  for (final before in ['Allemande Left\nRight Arm Turn', 'Allemande Right']) {
+    testWidgets('Allemande Left after "${before.replaceAll('\n', ', ')}" ends as Allemande Left does',
+        (tester) async {
+      await tester.runAsync(() async {
+        final model = await danced('$before\nAllemande Left');
+        expect(model.errorString, '');
+        expect(model.callNames.last, 'Allemande Left');
+        final reference = floor(await danced('Allemande Left'));
+        for (final d in floor(model).dancers) {
+          final r = same(reference, d);
+          expect(d.location.isAbout(r.location) && d.angleFacing.isAround(r.angleFacing), isTrue,
+              reason: 'dancer $d ended at ${d.location} facing ${d.angleFacing}, '
+                  'not at ${r.location} facing ${r.angleFacing}');
+        }
+      });
+    });
+  }
+
+  //  Called over and over, every Allemande Left lands where the first one did and every
+  //  right-hand turn where the first Right Arm Turn did — nobody drifts.
+  for (final right in ['Allemande Right', 'Right Allemande', 'Right Arm Turn'])
+  testWidgets('AL, $right, AL, $right, AL, $right, AL stays in place', (tester) async {
+    await tester.runAsync(() async {
+      final afterAL = floor(await danced('Allemande Left'));
+      final afterArmTurn = floor(await danced('Allemande Left\nRight Arm Turn'));
+      final calls = <String>[];
+      for (final call in ['Allemande Left', right, 'Allemande Left', right,
+                          'Allemande Left', right, 'Allemande Left']) {
+        calls.add(call);
+        final model = await danced(calls.join('\n'));
+        expect(model.errorString, '', reason: 'after ${calls.join(', ')}');
+        expect(model.callNames.length, calls.length, reason: '$call should dance after ${calls.length - 1} calls');
+        final reference = call == 'Allemande Left' ? afterAL : afterArmTurn;
+        //  Tight: a small error on each call would add up over a long sequence.
+        for (final d in floor(model).dancers) {
+          final r = same(reference, d);
+          expect((d.location - r.location).length < 0.001 &&
+                 d.angleFacing.isAround(r.angleFacing, delta: 0.001), isTrue,
+              reason: 'after ${calls.join(', ')}: dancer $d at ${d.location} facing '
+                  '${d.angleFacing}, not at ${r.location} facing ${r.angleFacing}');
+        }
+      }
+    });
+  });
+
+  //  After an Allemande Left the men face around the set with the center on their left, the
+  //  ladies the other way round with it on their right: either can step in to a star while
+  //  the others stay home.
+  for (final (call, starring, centerSide) in [
+    ('Men Star Left', Gender.BOY, pi/2),
+    ('Ladies Star Right', Gender.GIRL, -pi/2),
+  ])
+  testWidgets('$call after an Allemande Left', (tester) async {
+    await tester.runAsync(() async {
+      final before = floor(await danced('Allemande Left'));
+      final model = await danced('Allemande Left\n$call');
+      expect(model.errorString, '');
+      expect(model.callNames.length, 2);
+      for (final d in floor(model).dancers) {
+        final was = same(before, d);
+        if (d.gender == starring) {
+          expect(d.location.length.isAbout(1.0), isTrue, reason: 'dancer $d is not in the star');
+          expect((-d.location).angle.angleDiff(d.angleFacing).isAround(centerSide), isTrue,
+              reason: 'dancer $d does not have the center on the star hand side');
+        } else
+          expect(d.location.isAbout(was.location) && d.angleFacing.isAround(was.angleFacing),
+              isTrue, reason: 'dancer $d should not have moved');
+      }
+    });
+  });
+
+  //  Out of the star the men go straight to their partners for the Right Allemande — or the
+  //  ladies, out of a right-hand star, for a left one — and everyone finishes home facing their
+  //  corner, just as after an Allemande Left and Right Allemande: ready for the next one.
+  for (final (star, allemande) in [
+    ('Men Star Left', 'Right Allemande Partner'),
+    ('Men Star Left', 'Allemande Right Your Partner'),
+    ('Men Star Left', 'Right Allemande'),
+    ('Ladies Star Right', 'Left Allemande Partner'),
+    ('Ladies Star Right', 'Allemande Left Your Partner'),
+  ])
+  testWidgets('$star, $allemande', (tester) async {
+    await tester.runAsync(() async {
+      final reference = floor(await danced('Allemande Left\nRight Allemande'));
+      final model = await danced('Allemande Left\n$star\n$allemande');
+      expect(model.errorString, '');
+      expect(model.callNames.length, 3);
+      for (final d in floor(model).dancers) {
+        final r = same(reference, d);
+        expect((d.location - r.location).length < 0.001 &&
+               d.angleFacing.isAround(r.angleFacing, delta: 0.001), isTrue,
+            reason: 'dancer $d at ${d.location} facing ${d.angleFacing}, '
+                'not at ${r.location} facing ${r.angleFacing}');
+      }
+      final next = await danced('Allemande Left\n$star\n$allemande\nAllemande Left');
+      expect(next.errorString, '', reason: 'Allemande Left should follow');
     });
   });
 
