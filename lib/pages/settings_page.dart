@@ -22,6 +22,7 @@ import 'package:flutter/material.dart' as fm;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart' as pp;
 
+import '../app_themes.dart';
 import '../common_flutter.dart';
 import 'page.dart';
 
@@ -43,9 +44,7 @@ class SettingsFrame extends fm.StatelessWidget {
     return pp.Consumer<TitleModel>(
         builder: (context, titleModel, child) {
           titleModel.title = 'Settings';
-          return fm.Container(
-              color: Color.LIGHTGREY,
-              child:fm.ListView(children: [
+          return _LightSettingsList(children: [
                 DancerSpeedSettingWidget(),
                 LoopSettingWidget(),
                 GridSettingWidget(),
@@ -55,7 +54,7 @@ class SettingsFrame extends fm.StatelessWidget {
                 PhantomsSettingWidget(),
                 GeometrySettingWidget(),
                 LanguageSettingWidget()
-              ]));
+              ]);
         });
   }
 }
@@ -78,9 +77,7 @@ class SequencerSettingsFrame extends fm.StatelessWidget {
     return pp.Consumer2<Settings,TitleModel>(
         builder: (context, settings, titleModel, child) {
           titleModel.title = 'Settings';
-          return fm.Container(
-              color: Color.LIGHTGREY,
-              child:fm.ListView(children: [
+          return _LightSettingsList(children: [
                 StartingFormationDropdownWidget(),
                 DancerSpeedSettingWidget(),
                 GridSettingWidget(),
@@ -92,9 +89,27 @@ class SequencerSettingsFrame extends fm.StatelessWidget {
                 JoinCallsWithWidget(),
                 ResolverPanelSideWidget(),
                 CallSuggestionsSettingWidget(),
-              ]));
+              ]);
         });
   }
+}
+
+//  The settings are white rows on light grey whatever the app's theme, so they are drawn
+//  with the light theme; under the sidecar's dark theme their text came out pale grey on white.
+//  The Material sets the text colour from that theme: Text takes it from the nearest Material,
+//  not from the Theme.
+class _LightSettingsList extends fm.StatelessWidget {
+
+  final List<fm.Widget> children;
+  _LightSettingsList({required this.children});
+
+  @override
+  fm.Widget build(fm.BuildContext context) => fm.Theme(
+      data: lightTheme(),
+      child: fm.Material(
+          color: Color.LIGHTGREY,
+          child: fm.ListView(children: children)));
+
 }
 
 //  Class for title above radio buttons

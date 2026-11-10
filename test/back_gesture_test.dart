@@ -28,7 +28,7 @@
 
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:taminations/main.dart';
+import 'package:taminations/app_themes.dart';
 
 void main() {
   //  A left-edge drag to the right — a caller grabbing the slider thumb at beat 0.

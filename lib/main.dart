@@ -19,10 +19,8 @@
 */
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/cupertino.dart' as fc;
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart' as pp;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taminations/beat_notifier.dart';
@@ -30,6 +28,7 @@ import 'package:taminations/sequencer/sequencer_model.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'api_server_stub.dart' if (dart.library.io) 'api_server.dart';
+import 'app_themes.dart';
 import 'branch.dart';
 import 'tam_web_bridge_stub.dart' if (dart.library.html) 'tam_web_bridge.dart';
 import 'common_flutter.dart';
@@ -192,25 +191,6 @@ void main(List<String> args) async {
 
 ///  Desktop: no drag-to-go-back strip down the left edge of the window.
 ///
-///  Flutter's default transition on macOS is CupertinoPageTransitionsBuilder, which hangs a
-///  ~20px drag-to-pop gesture on the window's left edge. The sequencer's timeline slider runs the
-///  full width, so with the thumb at the far left, dragging it started the BACK gesture instead of
-///  the slider — the page slid off to the right and the page underneath showed through. Nobody
-///  back-swipes with a mouse, and the title bar has a Back button, so desktop gets a transition
-///  with no edge gesture. The phones keep theirs.
-class TaminationsAppTransitions {
-  static const desktop = fm.PageTransitionsTheme(builders: {
-    //  The phones keep the platform default (Cupertino on iOS carries the edge gesture, which is
-    //  right there). Only the desktops, where the pointer is a mouse, lose it.
-    fm.TargetPlatform.macOS: fm.FadeUpwardsPageTransitionsBuilder(),
-    fm.TargetPlatform.windows: fm.ZoomPageTransitionsBuilder(),
-    fm.TargetPlatform.linux: fm.ZoomPageTransitionsBuilder(),
-    fm.TargetPlatform.iOS: fc.CupertinoPageTransitionsBuilder(),
-    fm.TargetPlatform.android: fm.ZoomPageTransitionsBuilder(),
-    fm.TargetPlatform.fuchsia: fm.ZoomPageTransitionsBuilder(),
-  });
-}
-
 //  TaminationsApp is the top-level widget.
 //  Here it is just a wrapper for the router and its delegate (below),
 //  which does all the work
@@ -228,7 +208,6 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
   static const sidecarTopOffset = 40.0;
   static const sidecarWidthRatio = 0.16;
   static const sidecarHeightRatio = 0.94;
-  static const sidecarDarkBackground = fm.Color(0xFF000000);
   static const resolverPaneHeight = 360.0; // extra height for the resolve pushout panel (Bottom/Top)
   static const resolverPaneWidth = 380.0; // extra width for the resolve pushout panel (Left/Right)
 
@@ -338,31 +317,8 @@ class _TaminationsAppState extends fm.State<TaminationsApp> with WindowListener 
                       valueListenable: _darkMode,
                       builder: (context, isDark, _) => fm.MaterialApp.router(
                         debugShowCheckedModeBanner: false,
-                        theme: fm.ThemeData(
-                          fontFamily: 'Roboto',
-                          brightness: fm.Brightness.light,
-                          pageTransitionsTheme: TaminationsAppTransitions.desktop,
-                          textTheme: GoogleFonts.robotoTextTheme(),
-                          scrollbarTheme: fm.ScrollbarThemeData(
-                            thumbColor:
-                                fm.WidgetStateColor.resolveWith((states) => Color.TRANSPARENTGREY),
-                          ),
-                        ),
-                        darkTheme: fm.ThemeData(
-                          fontFamily: 'Roboto',
-                          brightness: fm.Brightness.dark,
-                          pageTransitionsTheme: TaminationsAppTransitions.desktop,
-                          scaffoldBackgroundColor: sidecarDarkBackground,
-                          colorScheme: const fm.ColorScheme.dark(
-                            surface: sidecarDarkBackground,
-                            primary: fm.Color(0xFF90CAF9),
-                          ),
-                          textTheme: GoogleFonts.robotoTextTheme(fm.ThemeData.dark().textTheme),
-                          scrollbarTheme: fm.ScrollbarThemeData(
-                            thumbColor:
-                                fm.WidgetStateColor.resolveWith((states) => Color.TRANSPARENTGREY),
-                          ),
-                        ),
+                        theme: lightTheme(),
+                        darkTheme: darkTheme(),
                         themeMode: isDark ? fm.ThemeMode.dark : fm.ThemeMode.light,
                         title: 'Taminations',
                         routerDelegate: _routerDelegate,
