@@ -27,6 +27,7 @@ import '../dance_model.dart';
 import 'abbreviations_model.dart';
 import 'call_context.dart';
 import 'call_error.dart';
+import 'call_suggestions.dart';
 import 'calls/coded_call.dart';
 import 'calls/xml_call.dart';
 import 'words.dart';
@@ -294,7 +295,9 @@ class SequencerModel extends fm.ChangeNotifier {
     try {
       _interpretOneLine(call);
     } on CallError catch(e) {
-      errorString = e.toString();
+      errorString = Settings.callSuggestions
+          ? explainFailure(e, call, contextFromCurrentFormation().dancers)
+          : e.toString();
       lastFailedCall = call;
       notifyListeners();
       return false;

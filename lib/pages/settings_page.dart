@@ -91,6 +91,7 @@ class SequencerSettingsFrame extends fm.StatelessWidget {
                 GeometrySettingWidget(),
                 JoinCallsWithWidget(),
                 ResolverPanelSideWidget(),
+                CallSuggestionsSettingWidget(),
               ]));
         });
   }
@@ -400,6 +401,21 @@ class PhantomsSettingWidget extends fm.StatelessWidget {
         value: Settings.phantoms,
         onChanged: (value) {
           Settings.phantoms = value;
+        },
+      ),
+    );
+  }
+}
+
+class CallSuggestionsSettingWidget extends fm.StatelessWidget {
+  @override
+  fm.Widget build(fm.BuildContext context) {
+    return pp.Consumer<Settings>(
+      builder: (context,settings,child) => _SettingCheckbox(
+        name:'Call Suggestions',
+        value: Settings.callSuggestions,
+        onChanged: (value) {
+          Settings.callSuggestions = value;
         },
       ),
     );

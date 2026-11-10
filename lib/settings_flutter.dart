@@ -159,6 +159,14 @@ class Settings extends fm.ChangeNotifier {
     _instance.notifyListeners();
   }
 
+  //  When a call fails, suggest what was meant or what dances from here
+  static bool get callSuggestions =>
+      _instance.proxy.getBool('Call Suggestions') ?? false;
+  static set callSuggestions(bool value) {
+    _instance.proxy.setBool('Call Suggestions', value);
+    _instance.notifyListeners();
+  }
+
   static String get geometry =>
       _instance.proxy.getString('Special Geometry') ?? 'None';
   static set geometry(String value) {

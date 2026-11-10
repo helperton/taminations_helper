@@ -36,6 +36,8 @@ class XMLCall extends Call {
   bool found = false;
   var perimeter = false;
   var foundLink = '';
+  //  How far the dancers had to be nudged to fit the matched animation's formation
+  var matchOffset = 0.0;
   @override String get help => 'Look at the animations of $name to find '
       'what the sequencer will accept';
 
@@ -86,6 +88,7 @@ class XMLCall extends Call {
           xmlmap = mm.map;
           ctx2 = ctx2q;
           bestOffset = totOffset;
+          matchOffset = totOffset;
           level = tam.level;
           foundOne = true;
         }

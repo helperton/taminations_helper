@@ -37,11 +37,15 @@ class SequencerAnimationFrame extends fm.StatelessWidget {
         BasicSequencerAnimation(),
         fm.Container(
           color: isDark ? Color.BLACK : Color.FLOOR,
-          child: fm.Row(
-            children: [
-              _SequencerSettingsButton(),
-              CopyImageButton()  // from animation_page
-            ]
+          child: pp.Consumer<Settings>(
+            builder: (context, _, _) => fm.Row(
+              children: [
+                _SequencerSettingsButton(),
+                if (Settings.callSuggestions)
+                  _SequencerCallsButton(),
+                CopyImageButton()  // from animation_page
+              ]
+            )
           )
         )
       ]
@@ -75,7 +79,9 @@ class PortraitSequencerAnimationFrame extends fm.StatelessWidget {
                         SequencerPasteButton(),
                         if (constraints.maxHeight > 50)
                           ...[fm.Divider(color: Color.GRAY, height: 8),
-                        _SequencerSettingsButton()]
+                        _SequencerSettingsButton(),
+                        if (Settings.callSuggestions)
+                          _SequencerCallsButton()]
                       ]
                     );
                   }
