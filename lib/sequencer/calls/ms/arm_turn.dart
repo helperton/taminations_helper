@@ -73,12 +73,7 @@ With no amount it turns 1/2 and steps on, like Allemande Left.
     }
     for (final entry in turns.entries) {
       final d = entry.key;
-      final moves = d.path.movelist;
-      final step = moves.last;
-      final stepTx = Path([step]).computeTransformList().last;
-      final stepAndTurn = Movement.fromTransform(stepTx * Matrix.getRotation(entry.value),
-          beats: step.beats, hands: step.hands);
-      d.path = Path([...moves.sublist(0, moves.length - 1), stepAndTurn]);
+      d.path = d.path.turnDuringLastMove(entry.value);
       d.animateToEnd();
     }
   }

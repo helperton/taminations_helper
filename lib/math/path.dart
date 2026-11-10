@@ -126,6 +126,26 @@ class Path implements Cloneable<Path> {
   Path changehands(int hands) =>
       Path(movelist.map((it) => it.useHands(hands)).toList());
 
+  //  The last movement ends on the same spot but turned [angle] more, so a dancer turns
+  //  as they step instead of standing still to turn afterwards
+  Path turnDuringLastMove(double angle) {
+    final last = movelist.last;
+    final lastTx = Path([last]).computeTransformList().last;
+    return Path([...movelist.sublist(0, movelist.length - 1),
+        Movement.fromTransform(lastTx * Matrix.getRotation(angle),
+            beats: last.beats, hands: last.hands)]);
+  }
+
+  //  The same path as if the dancer had turned [angle] first, with the turn made during the
+  //  first movement instead of standing still to turn before it
+  Path turnDuringFirstMove(double angle) {
+    final first = movelist.first;
+    final firstTx = Path([first]).computeTransformList().last;
+    return Path([Movement.fromTransform(Matrix.getRotation(angle) * firstTx,
+            beats: first.beats, hands: first.hands),
+        ...movelist.sublist(1)]);
+  }
+
   Path addhands(int hands) =>
     Path(movelist.map((it) => it.useHands(it.hands | hands)).toList());
 

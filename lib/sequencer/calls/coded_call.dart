@@ -89,6 +89,7 @@ import 'ms/dive_thru.dart';
 import 'ms/dosado.dart';
 import 'ms/face.dart';
 import 'ms/face_partner.dart';
+import 'ms/go_forward.dart';
 import 'ms/grand_square.dart';
 import 'ms/half_sashay.dart';
 import 'ms/pass_thru.dart';
@@ -510,6 +511,7 @@ abstract class CodedCall extends Call {
     '\\d\\d'.ri: (name) => Fraction(name),
 
     '((All)?4)?(Girl|Ladies|Lady)'.ri: (name) => Girls(name),
+    'GoForward\\d'.ri: (name) => GoForward(name),
     'Grand'.ri: (name) => Grand(name),
     '((Head|Side)Face)?GrandSquare(\\d+)Steps'.ri: (name) => GrandSquare(name),
 
