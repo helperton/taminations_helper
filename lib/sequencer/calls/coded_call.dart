@@ -21,6 +21,7 @@
 
 import '../../extensions.dart';
 import '../normalize_call.dart';
+import 'plus/allemande_left_to_a_thar.dart';
 import 'plus/pair_off.dart';
 import 'plus/flip_the_diamond.dart';
 import 'plus/cut_the_diamond.dart';
@@ -381,6 +382,7 @@ abstract class CodedCall extends Call {
     'Adjust(to)?.*'.ri: (name) => Adjust(name),
     'All8(?!Circulate)(?!Recycle)'.ri: (name) => AllEight(name),
     'AllemandeLeft'.ri: (name) => AllemandeLeft(name),
+    'AllemandeLeftto(an)?AllemandeThar'.ri: (name) => AllemandeLeftToAThar(name),
     'Allemande(Right((Your)?Partner)?|Left(Your)?Partner)'.ri: (name) => PartnerAllemande(name),
     '(Left|Right)ArmTurn(14|12|34)?'.ri: (name) => ArmTurn(name),
     'Allemande(Left|Right)(Your|the)?Corner'.ri: (name) => CornerAllemande(name),
@@ -512,6 +514,7 @@ abstract class CodedCall extends Call {
 
     '((All)?4)?(Girl|Ladies|Lady)'.ri: (name) => Girls(name),
     'GoForward\\d'.ri: (name) => GoForward(name),
+    'GoForward\\d(to(an)?)?AllemandeThar'.ri: (name) => GoForwardToAThar(name),
     'Grand'.ri: (name) => Grand(name),
     '((Head|Side)Face)?GrandSquare(\\d+)Steps'.ri: (name) => GrandSquare(name),
 

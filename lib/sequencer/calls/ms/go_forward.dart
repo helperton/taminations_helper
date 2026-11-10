@@ -36,7 +36,7 @@ round the ring, starting with the right.''';
 
   @override
   void performCall(CallContext ctx) {
-    final hands = int.parse('\\d+'.r.firstMatch(norm)![0]!);
+    final hands = _handsIn(norm);
     //  The dancers in order round the center, and which way round each one is going
     final round = ctx.dancers.toList()
       ..sort((a, b) => a.location.angle.compareTo(b.location.angle));
@@ -81,3 +81,27 @@ round the ring, starting with the right.''';
   }
 
 }
+
+//  Go Forward N to an Allemande Thar (or "Go Forward N, Allemande Thar"): the Nth hand is not a
+//  pull by, it is the left hand turning into the thar. So it is one hand fewer of Go Forward
+//  and then Allemande Left to an Allemande Thar with the next dancer.
+class GoForwardToAThar extends Action {
+
+  @override var level = LevelData.PLUS;
+  @override var helplink = 'plus/allemande_thar';
+  @override var help = '''Go Forward and an even number, to an Allemande Thar: that many hands
+of a Right and Left Grand, turning into the thar on the last one, which is the left.''';
+
+  GoForwardToAThar(super.name);
+
+  @override
+  void performCall(CallContext ctx) {
+    final hands = _handsIn(norm);
+    if (hands.isOdd)
+      throw CallError('The thar is made with the left hand, so the number must be even');
+    ctx.applyCalls('Go Forward ${hands - 1}', 'Allemande Left to an Allemande Thar');
+  }
+
+}
+
+int _handsIn(String norm) => int.parse('\\d+'.r.firstMatch(norm)![0]!);
