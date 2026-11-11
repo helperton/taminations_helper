@@ -1,0 +1,32 @@
+# Builds TamHelper for Windows. Flutter can only build a Windows app on Windows, so this runs
+# on GitHub's hosted Windows runner (free for a public repository) and attaches the app as a
+# zip to the run: open the run under Actions and download "TamHelper-Windows".
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The same Flutter the Mac builds use
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.4
+          cache: true
+
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - run: flutter build windows --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TamHelper-Windows
+          path: build/windows/x64/runner/Release/
+          if-no-files-found: error
